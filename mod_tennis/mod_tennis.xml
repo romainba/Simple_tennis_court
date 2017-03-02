@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.1.0" client="site" method="upgrade">
+<name>Tennis</name>
+<author>Romain</author>
+<version>1.0.0</version>
+<description>Tennis module</description>
+
+<files>
+  <filename module="mod_tennis">mod_tennis.php</filename>
+  <filename>index.html</filename>
+  <filename>helper.php</filename>
+  <folder>tmpl</folder>
+  <filename>tmpl/default.php</filename>
+  <filename>tmpl/index.html</filename>
+</files>
+
+<config>
+  <fields name="params">
+    <fieldset name="basic">
+      <field name="start_hour"
+	     type="text"
+	     default="8"
+	     label="Starting hour"
+	     description="Starting hour" />
+      <field name="end_hour"
+	     type="text"
+	     default="20"
+	     label="Ending hour"
+	     description="Ending hour" />
+      <field name="nb_week"
+	     type="text"
+	     default="2"
+	     label="Number of week to show"
+	     description="Number of week to show one the same page" />
+      <field name="format"
+	     type="list"
+	     default="debug"
+	     label="format"
+	     description="AJAX format">
+	<option value="debug">Debug</option>
+	<option value="raw">Raw</option>
+	<option value="json">JSON</option>
+      </field>
+    </fieldset>
+  </fields>
+</config>
+
+</extension>
