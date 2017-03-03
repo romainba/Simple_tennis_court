@@ -1,18 +1,15 @@
 
-/* For the current user,
- * oper = "add": add reservation if date & hour is not busy
- * oper = "del": delete reservation
- * Database and cell content is updated accordingly.
+/* For the current user, if date & hour is free then add reservation
+ * else remove it.
  */
-
-function reserve_day(cmd, date, jour, hour)
+function reserve_day(date, jour, hour)
 {
     var str = 'cell_' + jour + '_' + hour,
 	cell = document.getElementById(str),
 	req = {
 	    'option' : 'com_ajax',
 	    'module' : 'tennis',
-	    'cmd'    : cmd,
+	    'cmd'    : 'reserve',
 	    'date'   : date,
 	    'hour'   : hour,
 	    'format' : 'debug'
@@ -22,18 +19,25 @@ function reserve_day(cmd, date, jour, hour)
 	type   : 'POST',
 	data   : req,
 
-    	success: function (response) {
-	    console.log(cmd + ' ' + str);
-	    if (response == 0) {
-		if (cmd == 'add') {
-		    cell.innerHTML = 'reserved';
-		}
-		else {
-		    cell.innerHTML = '';
-		}
+    	success: function(response) {
+	    switch (response) {
+	    case "errInval":
+		alert("Invalid request");
+		break;
+	    case "errGuest":
+		alert("Please login first");
+		break;
+	    case "errInternal":
+		alert("Server internal error");
+		break;
+	    case "errBusy":
+		alert("Already reserved");
+		break;
+	    default:
+	    	cell.innerHTML = response;
 	    }
 	},
-
+	
 	error: function(response) {
 	    console.log(response);
 	}
@@ -81,6 +85,7 @@ function addEvent() {
     })
 }
 
+/* when document ready, add event */
 jQuery(document).ready(function() {
     addEvent();
 })

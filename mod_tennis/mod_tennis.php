@@ -5,8 +5,6 @@ defined('_JEXEC') or die;
 // Include the syndicate functions only once
 require_once dirname(__FILE__) . '/helper.php';
 
-$users_list = modTennisHelper::getUsers($params);
-
 $document = JFactory::getDocument();
 
 $format = $params->get('format', 'debug');

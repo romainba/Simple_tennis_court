@@ -6,19 +6,6 @@ function debug($msg) {
 
 class ModTennisHelper
 {
-    public static function getUsers($params)
-    {
-        $db = JFactory::getDbo();
-        $query= $db->getQuery(true);
-        $query->select($db->quoteName(array('id', 'username', 'name')))
-              ->from($db->quoteName('c8iu9_users'));
-        
-        $db->setQuery($query);
-        $results = $db->loadObjectList();
-
-        return (array) $results;
-    }
-
     public static function getWeekReservation($year, $week)
     {
         $db = JFactory::getDbo();
@@ -84,17 +71,16 @@ class ModTennisHelper
                 $date->setTime($h, 0, 0);
                 $d = $date->format('Y-m-d H:i:s');
 
-                if (is_null($table[$d])) {
-                    $action = 'add';
+                $id = $table[$d];
+                if (is_null($id)) {
                     $v = '';
                 } else {
-                    $action = 'del';
-                    $v = 'reserved';
+                    $user = JFactory::getUser($id);
+                    $v = $user->name;
                 }
                 $str .= '<td class="day" id="cell_'.$i.'_'.$h.'" '.
-                    'onclick="reserve_day(\''.$action.'\','.
-                    '\''.$date->format('Y-m-d').'\','.$i.','.$h.
-                    ')">'.$v.'</td>';
+                    'onclick="reserve_day(\''.$date->format('Y-m-d').'\','.
+                    $i.','.$h.')">'.$v.'</td>';
             }
             $str .= '</tr>';
         } 
@@ -113,74 +99,89 @@ class ModTennisHelper
 
         $cmd = $input->get('cmd');
         if (is_null($cmd))
-            return 0;
+            return "errInval";
 
-        $calendar_year = $session->get('year');
-        $calendar_week = $session->get('week');
-
-        $date = new DateTime($input->get('date'));
-        $date->setTime($input->get('hour'), 0, 0);
-        $d = $date->format('Y-m-d H:i:s');
-        
         $user = JFactory::getUser();
-        $user = (string) $user->id;
+        if ($user->guest)
+            return "errGuest";
 
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
 
-        switch ($cmd) {
-        case 'add':
+        if ($cmd == 'reserve') {
+            # input parameters: date, hour
 
-            $value = implode(',', array($db->quote($user), $db->quote($d)));
+            $date = new DateTime($input->get('date'));
+            $date->setTime($input->get('hour'), 0, 0);
+            $d = $date->format('Y-m-d H:i:s');
 
-            $query->insert($db->quoteName('reservation'))
-                  ->columns($db->quoteName(array('user', 'date')))
-                  ->values($value);
-            break;
+            # check day/hour status
+            $query->select($db->quoteName('user'))
+                  ->from($db->quoteName('reservation'))
+                  ->where($db->quoteName('date') . '=' . $db->quote($d));
+            $db->setQuery($query);
+            $result = $db->loadRow();
+
+            $query->clear();
+
+            if (is_null($result)) {
+                # add reservation
+                $value = implode(',', array($db->quote($user->id), $db->quote($d)));
+
+                $query->insert($db->quoteName('reservation'))
+                      ->columns($db->quoteName(array('user', 'date')))
+                      ->values($value);
+
+                $ret = $user->name;
+                
+            } else {
+                /* rejected if already reserved by another user */
+                if ($result[0] != $user->id)
+                    return "errBusy";
+                
+                # remove reservation
+                $query->delete($db->quoteName('reservation'))
+                      ->where($db->quoteName('user') . '=' . $db->quote($user->id) .
+                      ' and ' . $db->quoteName('date') . '=' . $db->quote($d));
+
+                $ret = '';
+            }
+
+            try {
+                $db->setQuery($query);
+                $result = $db->query();
+            } catch(Exception $e) {
+                $ret = "errInternal";
+            }
+            return $ret;
+
+        } else {
+            # update calendar
             
-        case 'del':
+            $year = $session->get('year');
+            $week = $session->get('week');
 
-            $query->delete($db->quoteName('reservation'))
-                  ->where($db->quoteName('user') . '=' . $db->quote($user) .
-                  ' and ' . $db->quoteName('date') . '=' . $db->quote($d));
-            break;
-            
-        case 'prev_week':
+            if ($cmd == 'prev_week') {
 
-            if ($calendar_week == 1) {
-                $calendar_week = 52;
-                $calendar_year--;
-            } else
-                $calendar_week--;
-            
-            $session->set('week', $calendar_week);
-            $session->set('year', $calendar_year);
+                if ($week == 1) {
+                    $week = 52;
+                    $year--;
+                } else
+                    $week--;
+            }
+            else if ($cmd == 'next_week') {
+                if ($week == 52) {
+                    $week = 1;
+                    $year++;
+                } else
+                    $week++;
+            }
+                
+            $session->set('week', $week);
+            $session->set('year', $year);
 
-            return ModTennisHelper::buildCalendar($calendar_year, $calendar_week);
-            
-        case 'next_week':
-
-            if ($calendar_week == 52) {
-                $calendar_week = 1;
-                $calendar_year++;
-            } else
-                $calendar_week++;
-            
-            $session->set('week', $calendar_week);
-            $session->set('year', $calendar_year);
-   
-            return ModTennisHelper::buildCalendar($calendar_year, $calendar_week);
+            return ModTennisHelper::buildCalendar($year, $week);
         }
-        
-        $db->setQuery($query);
-        try {
-            $result = $db->query();
-        } catch(Exception $e) {
-            echo 'exception: ', $e->getMessage();
-            return 1;
-        }
-        
-        return 0;
     }
 }
 
