@@ -121,10 +121,20 @@ class ModTennisHelper
                   ->where($db->quoteName('date') . '=' . $db->quote($d));
             $db->setQuery($query);
             $result = $db->loadRow();
-
             $query->clear();
 
             if (is_null($result)) {
+                # check if max number of reservation is reached
+                $query->select($db->quoteName('date'))
+                      ->from($db->quoteName('reservation'))
+                      ->where($db->quoteName('user') . '=' . $db->quote($user->id));
+                $db->setQuery($query);
+                $result = $db->query();
+                $query->clear();
+
+                if ($result->num_rows >= $params->get('max_reserv', 1))
+                    return "errMaxReserv";
+
                 # add reservation
                 $value = implode(',', array($db->quote($user->id), $db->quote($d)));
 

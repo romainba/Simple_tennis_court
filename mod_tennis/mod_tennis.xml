@@ -27,6 +27,11 @@
 	     default="20"
 	     label="Ending hour"
 	     description="Ending hour" />
+      <field name="max_reserv"
+	     type="text"
+	     default="1"
+	     label="Maximum number of reservation"
+	     description="Maximum number of reservation allowed" />
       <field name="nb_week"
 	     type="text"
 	     default="2"

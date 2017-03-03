@@ -33,6 +33,9 @@ function reserve_day(date, jour, hour)
 	    case "errBusy":
 		alert("Already reserved");
 		break;
+	    case "errMaxReserv":
+		alert("Max reservation number reached");
+		break;
 	    default:
 	    	cell.innerHTML = response;
 	    }
