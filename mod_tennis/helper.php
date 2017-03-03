@@ -124,6 +124,10 @@ class ModTennisHelper
             $query->clear();
 
             if (is_null($result)) {
+
+                if ($user->authorise('core.admin'))
+                    goto skip_check;
+
                 # check if max number of reservation is reached
                 $query->select($db->quoteName('date'))
                       ->from($db->quoteName('reservation'))
@@ -135,6 +139,7 @@ class ModTennisHelper
                 if ($result->num_rows >= $params->get('max_reserv', 1))
                     return "errMaxReserv";
 
+              skip_check:
                 # add reservation
                 $value = implode(',', array($db->quote($user->id), $db->quote($d)));
 
@@ -146,7 +151,7 @@ class ModTennisHelper
                 
             } else {
                 /* rejected if already reserved by another user */
-                if ($result[0] != $user->id)
+                if ($result[0] != $user->id and !$user->authorise('core.admin'))
                     return "errBusy";
                 
                 # remove reservation
