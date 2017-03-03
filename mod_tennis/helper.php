@@ -95,22 +95,19 @@ class ModTennisHelper
 		$params = new JRegistry();
 		$params->loadString($module->params);
 
-		$session = JFactory::getSession();
-
         $cmd = $input->get('cmd');
         if (is_null($cmd))
             return "errInval";
 
-        $user = JFactory::getUser();
-        if ($user->guest)
-            return "errGuest";
-
-        $db = JFactory::getDbo();
-        $query = $db->getQuery(true);
-
         if ($cmd == 'reserve') {
             # input parameters: date, hour
+            $user = JFactory::getUser();
+            if ($user->guest)
+                return "errGuest";
 
+            $db = JFactory::getDbo();
+            $query = $db->getQuery(true);
+            
             $date = new DateTime($input->get('date'));
             $date->setTime($input->get('hour'), 0, 0);
             $d = $date->format('Y-m-d H:i:s');
@@ -151,12 +148,13 @@ class ModTennisHelper
                 
             } else {
                 /* rejected if already reserved by another user */
-                if ($result[0] != $user->id and !$user->authorise('core.admin'))
+                $id = ($user->authorise('core.admin')) ? $result[0] : $user->id;
+                if ($result[0] != $id)
                     return "errBusy";
                 
                 # remove reservation
                 $query->delete($db->quoteName('reservation'))
-                      ->where($db->quoteName('user') . '=' . $db->quote($user->id) .
+                      ->where($db->quoteName('user') . '=' . $db->quote($id) .
                       ' and ' . $db->quoteName('date') . '=' . $db->quote($d));
 
                 $ret = '';
@@ -172,7 +170,8 @@ class ModTennisHelper
 
         } else {
             # update calendar
-            
+            $session = JFactory::getSession();
+
             $year = $session->get('year');
             $week = $session->get('week');
 
