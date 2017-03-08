@@ -15,7 +15,6 @@ function check_req(cmd)
 	async  : false, 
 
 	success: function(response) {
-	    console.log(response);
 	    switch (cmd) {
 	    case "isUserBusy":
 		if (response == "errMaxReserv")
@@ -81,7 +80,7 @@ function reserve_req(cell, date, hour, partner)
 	'hour'   : hour,
 	'partner': partner
     };
-    
+
     jQuery.ajax({
 	type   : 'POST',
 	data   : req,
@@ -125,7 +124,7 @@ function reserve_day(date, jour, hour)
 	message("Please log in first");
     	return;
     }
-    
+
     if (cell.innerHTML == '') {
 
 	if (check_req('isUserBusy')) {
@@ -139,6 +138,7 @@ function reserve_day(date, jour, hour)
 	jQuery('.partner').click(function(event) {
 	    popup.modal('hide');
 	    reserve_req(cell, date, hour, event.target.id);
+	    jQuery('.partner').unbind('click');
 	});
 	
     } else
