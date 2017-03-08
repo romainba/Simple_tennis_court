@@ -92,10 +92,9 @@ class ModTennisHelper
         $str .= '</table>';
 
         $str .= '<style>' .
-            '#message, #partner { top:20%; left:30%;' .
-            'height:100px; width:200px; background-color:lightyellow; ' .
+            '#message, #partner { top:20%; left:30%; background-color:lightyellow; ' .
             'margin:auto; text-align:left; padding:5px; ' .
-            'border:1px solid #ccc; opacity:80; }' .
+            'border:1px solid #ccc; opacity:10; }' .
             '</style>';
         
         $str .= '<div class="modal hide" id="partner">' .

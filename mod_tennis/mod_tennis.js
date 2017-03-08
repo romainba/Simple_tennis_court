@@ -1,5 +1,5 @@
 
-/* return true if user is logged in */
+/* return true if request is true */
 function check_req(cmd)
 {
     var	req = {
@@ -56,6 +56,15 @@ function getCookie(cname) {
 
 function message(msg)
 {
+    var el = document.getElementById("message");
+    var w = msg.length;
+    var h = (w / 20) >> 0;
+    if (h)
+	w = 20;
+    
+    el.style.width = w * 7 + "px";
+    el.style.height = 60 + h * 10 + "px";
+
     var popup = jQuery("#message");
     popup.html('<p align="center">' + msg + '</p>' +
 	       '<p align="center"><input type="button" value="close"></input>');
