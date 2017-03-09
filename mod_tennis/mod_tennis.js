@@ -56,16 +56,19 @@ function getCookie(cname) {
 
 function message(msg)
 {
-    var el = document.getElementById("message");
+    var popup = jQuery("#message");
     var w = msg.length;
     var h = (w / 20) >> 0;
     if (h)
 	w = 20;
     
-    el.style.width = w * 7 + "px";
-    el.style.height = 60 + h * 10 + "px";
-
-    var popup = jQuery("#message");
+    popup.css({
+	width: w * 8,
+	height: 60 + h * 11,
+	left: jQuery(window).width()/2 - w * 8 /2,
+	top: jQuery(window).height()/2 - (60 + h * 11)/2
+    });
+    
     popup.html('<p align="center">' + msg + '</p>' +
 	       '<p align="center"><input type="button" value="close"></input>');
     popup.modal("show");
@@ -142,6 +145,14 @@ function reserve_day(date, jour, hour)
 	}
 
 	var popup = jQuery("#partner");
+
+	popup.css({
+	    width: 180,
+	    height: 100,
+	    left: jQuery(window).width()/2 - 180/2,
+	    top: jQuery(window).height()/2 - 100/2
+	});
+
 	popup.modal('show');
 
 	jQuery('.partner').click(function(event) {
