@@ -1,6 +1,6 @@
 
 /* return true if request is true */
-function check_req(cmd)
+function checkReq(cmd)
 {
     var	req = {
 	'option' : 'com_ajax',
@@ -81,7 +81,7 @@ function message(msg)
 /* For the current user, if date & hour is free then add reservation
  * else remove it.
  */
-function reserve_req(cell, date, hour, partner)
+function reserveReq(cell, date, hour, partner)
 {
     var	req = {
 	'option' : 'com_ajax',
@@ -126,7 +126,7 @@ function reserve_req(cell, date, hour, partner)
     })   
 }
 
-function reserve_day(date, jour, hour)
+function reserveDay(date, jour, hour)
 {
     var str = 'cell_' + jour + '_' + hour,
 	cell = document.getElementById(str),
@@ -139,7 +139,7 @@ function reserve_day(date, jour, hour)
 
     if (cell.innerHTML == '') {
 
-	if (check_req('isUserBusy')) {
+	if (checkReq('isUserBusy')) {
 	    message("You'reached max number of reservation");
 	    return;
 	}
@@ -157,22 +157,24 @@ function reserve_day(date, jour, hour)
 
 	jQuery('.partner').click(function(event) {
 	    popup.modal('hide');
-	    reserve_req(cell, date, hour, event.target.id);
+	    reserveReq(cell, date, hour, event.target.id);
 	    jQuery('.partner').unbind('click');
 	});
 	
     } else
-	reserve_req(cell, date, hour, null);
+	reserveReq(cell, date, hour, null);
 }
 
-function change_week(cmd)
+function updateCalendar(cmd, width)
 {
     var req = {
 	'option' : 'com_ajax',
 	'module' : 'tennis',
 	'cmd'    : cmd,
-	'format' : 'debug'
+	'format' : 'debug',
+	'width'  : width
     };
+
     jQuery.ajax({
 	type   : 'POST',
 	data : req,
@@ -185,26 +187,33 @@ function change_week(cmd)
 	},
 	
 	error: function(response) {
-	    console.log("change_week error");
+	    console.log("updateCalendar failed");
 	    console.log(response);
 	}
     })
 }
 
+var width;
+
 function addEvent() {
-    jQuery(".day").hover(
-	function() {
-	    jQuery(this).css("background-color", "lightyellow");
-	},
-	function() {
-	    jQuery(this).css("background-color", "white");
-	})
     jQuery(".weekBtn").click(function(event) {
-	change_week(event.target.id);
+	updateCalendar(event.target.id, width);
     })
 }
 
 /* when document ready, add event */
 jQuery(document).ready(function() {
+    width = jQuery("#calendar").css("width");
+    updateCalendar('refreshWeek', parseInt(width, 10));
     addEvent();
 })
+
+/* when window is resized */
+jQuery(window).on('resize', function() {
+    var w = jQuery("#calendar").css("width");
+    if (w != width) {
+	width = w;
+	/* to refresh calendar */
+	updateCalendar('refreshWeek', parseInt(w, 10));
+    }
+});
