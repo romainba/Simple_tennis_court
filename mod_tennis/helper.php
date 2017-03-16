@@ -8,15 +8,13 @@ JHTML::_('behavior.modal', 'a.modal');
 
 class ModTennisHelper
 {
-    public static function getWeekReservation($year, $week)
+    public static function getWeekReservation($date)
     {
         $db = JFactory::getDbo();
         $query= $db->getQuery(true);
 
-        $date = new DateTime();
-        $date->setISODate($year, $week, 1);
         $start = $date->format('Y-m-d');
-        $date->setISODate($year, $week + 1, 1);
+        $date->modify("+7 days");
         $end = $date->format('Y-m-d');
 
         $query->select($db->quoteName(array('id', 'user', 'date', 'partner')))
@@ -35,25 +33,33 @@ class ModTennisHelper
         return $res_table;
     }
 
-    public static function buildCalendar($year, $week, $width)
+    public static function buildCalendar($cmd, $width)
     {
         $w = $width - 50 /* hour width */;
-        $num = ($w / 100 /* cell width */) >> 0;
+        $num = ($w / 90 /* cell width */) >> 0;
         
-        $c1 = 0;
-        $c2 = $c1 + $num;
+        $session = & JFactory::getSession();
+        $inc = $session->get('date');
 
-        $str = '<style>#calendar td { width:' . ($w * 100 / ($num + 1)) / $width . '%; }</style>';
+        if ($cmd == 'prevCal')
+            $inc--;
+        else if ($cmd == 'nextCal')
+            $inc++;
         
-        $str .= '<input type="submit" class="weekBtn" value="<<" id="prevWeek"/>';
-        $str .= 'week ' . $week;
-        $date = new DateTime();
-        $date->setISODate($year, $week, $c1 + 1);
-        $str .= ': from ' . $date->format('d/m/y');
-        $date->setISODate($year, $week, $c2 + 1);
-        $str .= ' to ' . $date->format('d/m/y');
+        if ($cmd == 'refreshCal') {
+            $session->set('width', $width);
+        } else
+            $session->set('date', $inc);
+
+        $today = new DateTime();
+        $date = new DateTime();        
+        $date->modify($inc . ' days');
         
-        $str .= '<input type="submit" class="weekBtn" value=">>" id="nextWeek"/>';
+        $str = '<style>#calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>';
+        
+        $str .= '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>';
+        $str .= $date->format('d M');
+        $str .= '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>';
 
         $module = JModuleHelper::getModule('mod_tennis');
         $params = new JRegistry($module->params);
@@ -61,27 +67,26 @@ class ModTennisHelper
         $end = $params->get('end_hour', 20);
         
         $str .= '<table id="calendar">';
+        $str .= '<tr class="weekdays"><td class="first-column"></td>';
 
-        $headings = array('Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche');
-        $headings = array_slice($headings, $c1, $c2 - $c1 + 1);
+        $d = [];
+        for ($i = 0; $i < $num; $i++) {
+            $d[$i] = clone $date;
+            $d[$i]->modify($i . "day");
+            $str .= '<td class="day-head">' . $d[$i]->format("l") . '</td>';
+        }
+        $str .= '</tr>';
 
-        $str .= '<tr class="weekdays"><td class="first-column"></td>'
-            .'<td class="day-head">'
-            .implode('</td><td class="day-head">',$headings).'</td></tr>';
-
-        $table = ModTennisHelper::getWeekReservation($year, $week);
+        $table = ModTennisHelper::getWeekReservation($date);
 
         for ($h = $begin; $h <= $end; $h++) {
     
             $str .= '<tr class="days">';
             $str .= '<td class="day-hour first-column">'.$h.':00</td>';
-    
-            for ($i = $c1 + 1; $i <= $c2 + 1; $i++) {
-                $date->setISODate($year, $week, $i);
-                $date->setTime($h, 0, 0);
-                $d = $date->format('Y-m-d H:i:s');
 
-                $item = $table[$d];
+            for ($i = 0; $i < $num; $i++) {
+                $d[$i]->setTime($h, 0, 0);
+                $item = $table[$d[$i]->format('Y-m-d H:i:s')];
 
                 if (is_null($item)) {
                     $v = '';
@@ -89,10 +94,14 @@ class ModTennisHelper
                     $user = JFactory::getUser($item['user']);
                     $v = $user->name.'<br>+'.$item["partner"];
                 }
+
+                if ($d[$i] <= $today)
+                    $str .= '<td class="day-past">';
+                else
+                    $str .= '<td class="day" id="cell_'.$i.'_'.$h.'" '.
+                        'onclick="reserveDay('.$i.','.$h.')">';
                 
-                $str .= '<td class="day" id="cell_'.$i.'_'.$h.'" '.
-                    'onclick="reserveDay(\''.$date->format('Y-m-d').'\','.
-                    $i.','.$h.')">'.$v.'</td>';
+                $str .= $v.'</td>';
             }
             $str .= '</tr>';
         } 
@@ -138,8 +147,12 @@ class ModTennisHelper
 
             $db = JFactory::getDbo();
             $query = $db->getQuery(true);
-            
-            $date = new DateTime($input->get('date'));
+
+            $session = & JFactory::getSession();
+            $inc = $session->get('date') + $input->get('date');
+
+            $date = new DateTime();
+            $date->modify($inc . "day");
             $date->setTime($input->get('hour'), 0, 0);
             $d = $date->format('Y-m-d H:i:s');
 
@@ -203,39 +216,11 @@ class ModTennisHelper
 
             return $ret;
             
-      case 'prevWeek':
-      case 'nextWeek':
-      case 'refreshWeek':
-
-          /* update calendar */
-          $session = JFactory::getSession();
-
-          $year = $session->get('year');
-          $week = $session->get('week');
-          
-          if ($cmd == 'prevWeek') {
-              
-              if ($week == 1) {
-                  $week = 52;
-                  $year--;
-              } else
-                  $week--;
-          }
-          else if ($cmd == 'nextWeek') {
-              if ($week == 52) {
-                  $week = 1;
-                  $year++;
-              } else
-                  $week++;
-          } else if ($cmd == 'resfreshWeek') {
-              $session->set('width', $width); 
-          }
-          
-          $session->set('week', $week);
-          $session->set('year', $year);
-     
-          return ModTennisHelper::buildCalendar($year, $week, $width);
-        }
+      case 'prevCal':
+      case 'nextCal':
+      case 'refreshCal':
+          return ModTennisHelper::buildCalendar($cmd, $width);
+      }
         
         return $ret;
     }

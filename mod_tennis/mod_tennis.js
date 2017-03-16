@@ -126,9 +126,9 @@ function reserveReq(cell, date, hour, partner)
     })   
 }
 
-function reserveDay(date, jour, hour)
+function reserveDay(date, hour)
 {
-    var str = 'cell_' + jour + '_' + hour,
+    var str = 'cell_' + date + '_' + hour,
 	cell = document.getElementById(str),
 	logged = (getCookie("joomla_user_state") == "logged_in");
 
@@ -204,7 +204,7 @@ function addEvent() {
 /* when document ready, add event */
 jQuery(document).ready(function() {
     width = jQuery("#calendar").css("width");
-    updateCalendar('refreshWeek', parseInt(width, 10));
+    updateCalendar('refreshCal', parseInt(width, 10));
     addEvent();
 })
 
@@ -214,6 +214,6 @@ jQuery(window).on('resize', function() {
     if (w != width) {
 	width = w;
 	/* to refresh calendar */
-	updateCalendar('refreshWeek', parseInt(w, 10));
+	updateCalendar('refreshCal', parseInt(w, 10));
     }
 });

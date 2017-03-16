@@ -72,6 +72,10 @@ header {
     background: #d3d3d3;
 }
 
+#calendar .days td.day-past {
+    background: #f3f3f3;
+}
+
 #calendar .event {
     clear: both;
     display: block;
