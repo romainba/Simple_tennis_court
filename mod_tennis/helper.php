@@ -107,12 +107,6 @@ class ModTennisHelper
         } 
         $str .= '</table>';
 
-        $str .= '<style>' .
-            '#message, #partner { top:20%; left:30%; background-color:lightyellow; ' .
-            'margin:auto; text-align:left; padding:5px; ' .
-            'border-radius:10px; border:solid 3px solid #000; opacity:10; }' .
-            '</style>';
-        
         $str .= '<div class="modal hide" id="partner">' .
             '<div class="modal-content"><p>Please select partner type</p>' .
             '<p><input type="button" class="partner" id="member">Member</input></p>' .
