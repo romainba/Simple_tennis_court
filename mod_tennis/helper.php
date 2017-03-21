@@ -1,9 +1,5 @@
 <?php
 
-function debug($msg) {
-    echo "<script>console.log('".$msg."');</script>";
-}
-
 JHTML::_('behavior.modal', 'a.modal');
 
 class ModTennisHelper
@@ -18,21 +14,40 @@ class ModTennisHelper
         $end = $date->format('Y-m-d');
 
         $query->select($db->quoteName(array('id', 'user', 'date', 'partner')))
-              ->from($db->quoteName('reservation'))
+              ->from($db->quoteName('#__reservation'))
               ->order($db->quoteName('date') . ' ASC')
               ->where($db->quoteName('date').' >= '.$db->quote($start).' and '.
               	$db->quoteName('date').' <= '.$db->quote($end));
 
         $db->setQuery($query);
-        $res = $db->loadObjectList();
-
-        $res_table = array();
-        foreach ($res as $r)
-            $res_table[$r->date] = array("user" => $r->user, "partner" => $r->partner);
-
-        return $res_table;
+        return $db->loadAssocList('date');
     }
 
+    public static function loadUserDetails()
+    {
+        $db = JFactory::getDbo();
+        $query = $db->getQuery(true);
+        
+        $query->select($db->quoteName(array('user', 'group_id', 'abonnement', 'naissance')))
+              ->from($db->quoteName('#__user_details'));
+        $db->setQuery($query);
+
+        return $db->loadAssocList('user');
+    }
+
+    public static function usersSameGroup($details, $user)
+    {
+        if ($details == NULL)
+            return NULL;
+        
+        $g = $details[$user->id]['group'];
+        $a = array();
+        foreach ($details as $u => $d)
+            if ($d['group'] == $g)
+                array_push($a, $u);
+        return $a;
+    }
+    
     public static function buildCalendar($cmd, $width)
     {
         $w = $width - 50 /* hour width */;
@@ -54,7 +69,7 @@ class ModTennisHelper
         $today = new DateTime();
         $date = new DateTime();        
         $date->modify($inc . ' days');
-        
+
         $str = '<style>#calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>';
         
         $str .= '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>';
@@ -92,7 +107,11 @@ class ModTennisHelper
                     $v = '';
                 } else {
                     $user = JFactory::getUser($item['user']);
-                    $v = $user->name.'<br>+'.$item["partner"];
+                    $v = $user->name.'<br>';
+                    if ($item["partner"] == 0)
+                        $v .= "+member";
+                    else
+                        $v .= "+guest";
                 }
 
                 if ($d[$i] <= $today)
@@ -117,7 +136,7 @@ class ModTennisHelper
 
         return $str;
     }
-
+    
     public static function getAjax() {
 
  		$input  = JFactory::getApplication()->input;
@@ -131,7 +150,7 @@ class ModTennisHelper
             return "errInval";
         
         $width = $input->get('width');
-        
+
         switch ($cmd) {
         case 'reserve':
         case 'isUserBusy':
@@ -139,12 +158,33 @@ class ModTennisHelper
             if ($user->guest)
                 return "errGuest";
 
+            $session = JFactory::getSession();
+
+            $details = $session->get('userDetails');
+            $usersSameGroup = $session->get('usersSameGroup');
+
+            if ($session->get('userId') != $user->id) {
+                # change user
+                $details = NULL;
+                $usersSameGroup = NULL;
+                $session->set('userId', $user->id);
+            }
+            
             $db = JFactory::getDbo();
             $query = $db->getQuery(true);
 
-            $session = & JFactory::getSession();
-            $inc = $session->get('date') + $input->get('date');
+            if ($details == NULL) {
+                $details = ModTennisHelper::loadUserDetails();
+                $session->set('userDetails', $details);
+            }
 
+            if ($usersSameGroup == NULL) {
+                $usersSameGroup = ModTennisHelper::usersSameGroup($details, $user);
+                $session->set('usersSameGroup', $usersSameGroup);
+            }
+
+            $inc = $session->get('date') + $input->get('date');
+            
             $date = new DateTime();
             $date->modify($inc . "day");
             $date->setTime($input->get('hour'), 0, 0);
@@ -152,9 +192,11 @@ class ModTennisHelper
 
             if ($cmd == 'isUserBusy' and $user->authorise('core.admin') == false) {
                 // check if max number of reservation is reached
+                $u = "'" . implode("','", $usersSameGroup) . "'";
                 $query->select($db->quoteName('date'))
-                      ->from($db->quoteName('reservation'))
-                      ->where($db->quoteName('user') . '=' . $db->quote($user->id));
+                      ->from($db->quoteName('#__reservation'))
+                      ->where($db->quoteName('user')." in ($u)");
+                
                 $db->setQuery($query);
                 $result = $db->query();
                 $query->clear();
@@ -165,11 +207,14 @@ class ModTennisHelper
                     return "";
             }
             
-            $partner = $input->get('partner');
+            switch ($input->get('partner')) {
+            case 'member': $partner = 0; break;
+            case 'guest': $partner = 1; break;
+            }
             
             /* check day/hour status */
             $query->select($db->quoteName('user'))
-                  ->from($db->quoteName('reservation'))
+                  ->from($db->quoteName('#__reservation'))
                   ->where($db->quoteName('date') . '=' . $db->quote($d));
             $db->setQuery($query);
             $result = $db->loadRow();
@@ -181,11 +226,11 @@ class ModTennisHelper
                 $value = implode(',', array($db->quote($user->id), $db->quote($d),
                 	$db->quote($partner)));
 
-                $query->insert($db->quoteName('reservation'))
+                $query->insert($db->quoteName('#__reservation'))
                       ->columns($db->quoteName(array('user', 'date', 'partner')))
                       ->values($value);
 
-                $ret = $user->name.'<br>+'.$partner;
+                $ret = $user->name.'<br>+'.$input->get('partner');
                 
             } else {
                 /* rejected if already reserved by another user */
@@ -194,7 +239,7 @@ class ModTennisHelper
                     return "errBusy";
                 
                 /* remove reservation */
-                $query->delete($db->quoteName('reservation'))
+                $query->delete($db->quoteName('#__reservation'))
                       ->where($db->quoteName('user') . '=' . $db->quote($id) .
                       ' and ' . $db->quoteName('date') . '=' . $db->quote($d));
 
