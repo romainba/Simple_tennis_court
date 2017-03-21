@@ -190,12 +190,16 @@ class ModTennisHelper
             $date->setTime($input->get('hour'), 0, 0);
             $d = $date->format('Y-m-d H:i:s');
 
+            $today = new DateTime();
+            $t = $today->format('Y-m-d H:00:00');
+
             if ($cmd == 'isUserBusy' and $user->authorise('core.admin') == false) {
                 // check if max number of reservation is reached
                 $u = "'" . implode("','", $usersSameGroup) . "'";
                 $query->select($db->quoteName('date'))
                       ->from($db->quoteName('#__reservation'))
-                      ->where($db->quoteName('user')." in ($u)");
+                      ->where($db->quoteName('user')." in ($u) and " .
+                      	$db->quoteName('date')." >= ".$db->quote($t));
                 
                 $db->setQuery($query);
                 $result = $db->query();
@@ -234,14 +238,12 @@ class ModTennisHelper
                 
             } else {
                 /* rejected if already reserved by another user */
-                $id = ($user->authorise('core.admin')) ? $result[0] : $user->id;
-                if ($result[0] != $id)
+                if (!$user->authorise('core.admin') && !in_array($result[0], $usersSameGroup))
                     return "errBusy";
                 
                 /* remove reservation */
                 $query->delete($db->quoteName('#__reservation'))
-                      ->where($db->quoteName('user') . '=' . $db->quote($id) .
-                      ' and ' . $db->quoteName('date') . '=' . $db->quote($d));
+                      ->where($db->quoteName('date') . '=' . $db->quote($d));
 
                 $ret = '';
             }
