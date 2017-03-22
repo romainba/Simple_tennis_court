@@ -116,10 +116,11 @@ class ModTennisHelper
 
                 if ($d[$i] <= $today)
                     $str .= '<td class="day-past">';
-                else
-                    $str .= '<td class="day" id="cell_'.$i.'_'.$h.'" '.
+                else {
+                    $class = ($v == '') ? "day" : "day-busy";
+                    $str .= '<td class="'.$class.'" id="cell_'.$i.'_'.$h.'" '.
                         'onclick="reserveDay('.$i.','.$h.')">';
-                
+                }
                 $str .= $v.'</td>';
             }
             $str .= '</tr>';

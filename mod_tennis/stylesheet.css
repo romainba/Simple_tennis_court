@@ -76,6 +76,10 @@ header {
     background: #f3f3f3;
 }
 
+#calendar .days td.day-busy {
+    background: #e6ffe6;
+}
+
 #message, #partner {
     top:20%; left:30%; background-color:lightyellow; 
     margin:auto; text-align:left; padding:5px;
