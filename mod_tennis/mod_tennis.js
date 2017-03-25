@@ -116,6 +116,7 @@ function reserveReq(cell, date, hour, partner)
 		break;
 	    default:
 	    	cell.innerHTML = response;
+		cell.className = (response == '') ? "day" : "day-busy";
 	    }
 	},
 	

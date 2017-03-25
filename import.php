@@ -3,16 +3,14 @@
 function toascii( $str )
 {
     return strtr(utf8_decode($str), 
-        utf8_decode(
-        'ŠŒšœŸ¥µÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏĞÑÒÓÔÕÖØÙÚÛÜİßàáâãäåæçèéêëìíîïğñòóôõöøùúûüıÿ'),
-        'SOZsozYYuAAAAAAACEEEEIIIIDNOOOOOOUUUUYsaaaaaaaceeeeiiiionoooooouuuuyy');
+        utf8_decode('ÂÃÄÅÆÇÈÉÊÍÎÏĞÑÔÕÖØÚ'), 'CEEEEIIIIOOOOOUUUYY');
 }
 
 $sql_hostname = 'localhost';
 $sql_user = 'admin';
 $sql_password = '';
 $mambo_database_name = 'test'; //'joomla';
-$table_prefix = 'c8iu9';
+$table_prefix = 'i9iwx';
 
 $passwd = '$2y$10$U9c5WD14h.IsMHYj1LCseeVlH4Cdzv7eHBkEW2bOps6y.dZ9W8Zwm'; // tclv
 

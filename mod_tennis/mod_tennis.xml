@@ -8,7 +8,9 @@
 <files>
   <filename module="mod_tennis">mod_tennis.php</filename>
   <filename>index.html</filename>
+  <filename>mod_tennis.js</filename>
   <filename>helper.php</filename>
+  <filename>stylesheet.css</filename>
   <folder>tmpl</folder>
   <filename>tmpl/default.php</filename>
   <filename>tmpl/index.html</filename>
