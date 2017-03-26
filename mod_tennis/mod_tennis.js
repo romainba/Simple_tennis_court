@@ -1,4 +1,10 @@
 
+const RES_TYPE_NONE = 0;
+const RES_TYPE_MEMBER = 1;
+const RES_TYPE_GUEST = 2;
+const RES_TYPE_COURS = 3;
+const RES_TYPE_MANIF = 4;
+
 /* return true if request is true */
 function checkReq(cmd)
 {
@@ -81,7 +87,7 @@ function message(msg)
 /* For the current user, if date & hour is free then add reservation
  * else remove it.
  */
-function reserveReq(cell, date, hour, partner)
+function reserveReq(cell, date, hour, resType)
 {
     var	req = {
 	'option' : 'com_ajax',
@@ -90,7 +96,7 @@ function reserveReq(cell, date, hour, partner)
 	'cmd'    : 'reserve',
 	'date'   : date,
 	'hour'   : hour,
-	'partner': partner
+	'resType': resType
     };
 
     jQuery.ajax({
@@ -131,13 +137,21 @@ function reserveDay(date, hour)
 {
     var str = 'cell_' + date + '_' + hour,
 	cell = document.getElementById(str),
-	logged = (getCookie("joomla_user_state") == "logged_in");
-
+	logged = (getCookie("joomla_user_state") == "logged_in"),
+	elem = document.getElementById("resTypeList"),
+	resType = elem ? elem.value : 0;
+	
     if (logged == false) {
 	message("Please log in first");
     	return;
     }
 
+    /* if res_type != 0 then priority over any normal reservation */ 
+    if (resType == RES_TYPE_COURS || resType == RES_TYPE_MANIF) {
+	reserveReq(cell, date, hour, resType);
+	return;
+    }
+    
     if (cell.innerHTML == '') {
 
 	if (checkReq('isUserBusy')) {
@@ -145,7 +159,12 @@ function reserveDay(date, hour)
 	    return;
 	}
 
-	var popup = jQuery("#partner");
+	if (resType) {
+	    reserveReq(cell, date, hour, resType);
+	    return;
+	}
+	
+	var popup = jQuery("#resType");
 
 	popup.css({
 	    width: 180,
@@ -156,14 +175,14 @@ function reserveDay(date, hour)
 
 	popup.modal('show');
 
-	jQuery('.partner').click(function(event) {
+	jQuery('.resType').click(function(event) {
 	    popup.modal('hide');
 	    reserveReq(cell, date, hour, event.target.id);
-	    jQuery('.partner').unbind('click');
+	    jQuery('.resType').unbind('click');
 	});
 	
     } else
-	reserveReq(cell, date, hour, null);
+	reserveReq(cell, date, hour, RES_TYPE_NONE);
 }
 
 function updateCalendar(cmd, width)
