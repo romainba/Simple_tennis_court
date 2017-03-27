@@ -5,6 +5,40 @@ header {
     text-align: center;
 }
 
+.usersList tr {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;  
+}
+
+.usersList td {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    height: 50px;
+}
+
+.usersList #name {
+    width: 100px;
+}
+.usersList #username {
+    width: 150px;
+}
+.usersList #email {
+    width: 200px;
+}
+.usersList #group_id {
+    width: 30px;
+}
+.usersList #abo {
+    width: 30px;
+}
+.usersList #birth {
+    width: 80px;
+}
+
 #calendar {
     width: 100%;    
 }
@@ -79,6 +113,11 @@ header {
 
 #calendar .days td.day-busy {
     background: #e6ffe6;
+    text-align: center;
+}
+
+#calendar .days td.day-busy:hover {
+    background: #e6efd6;
     text-align: center;
 }
 

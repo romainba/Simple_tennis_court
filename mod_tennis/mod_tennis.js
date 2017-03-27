@@ -5,13 +5,49 @@ const RES_TYPE_GUEST = 2;
 const RES_TYPE_COURS = 3;
 const RES_TYPE_MANIF = 4;
 
+const ERR_INVAL = 1;
+const ERR_GUEST = 2;
+const ERR_INTERNAL = 3;
+const ERR_BUSY = 4;
+const ERR_MAXRESERV = 5;
+
+const AJAX_FMT = "JSON";
+
+function getStrings()
+{
+    var req = {
+	'option' : 'com_ajax',
+	'module' : 'tennis',
+	'cmd'    : 'getStrings',
+	'format' : AJAX_FMT,
+    };
+
+    jQuery.ajax({
+	type   : 'POST',
+	data : req,
+	
+	success: function (response) {
+	    ERR_NAMES = response.data[0];
+	    RES_TYPE = response.data[1];
+	    RES_TYPE_CLASS = response.data[2]
+	},
+	
+	error: function(response) {
+	    console.log("getStrings failed");
+	    console.log(response);
+	}
+    })
+
+}
+
+
 /* return true if request is true */
 function checkReq(cmd)
 {
     var	req = {
 	'option' : 'com_ajax',
 	'module' : 'tennis',
-	'format' : 'debug',
+	'format' : AJAX_FMT,
 	'cmd'    : cmd,
     }, ret = 0;
 
@@ -23,15 +59,14 @@ function checkReq(cmd)
 	success: function(response) {
 	    switch (cmd) {
 	    case "isUserBusy":
-		if (response == "errMaxReserv")
-		    ret = 1;
+		ret = response.data;
 		break;
 	    }
 	},
 	error: function(response) {
 	    console.log("ajax failed:");
 	    console.log(response);
-	    ret = -1;
+	    ret = ERR_INTERNAL;
 	}
     })
     return ret;
@@ -76,7 +111,7 @@ function message(msg)
     });
     
     popup.html('<p align="center">' + msg + '</p>' +
-	       '<p align="center"><input type="button" value="close"></input>');
+	       '<p align="center"><input type="button" value="Ok"></input>');
     popup.modal("show");
 	
     jQuery('input').click(function() {
@@ -92,7 +127,7 @@ function reserveReq(cell, date, hour, resType)
     var	req = {
 	'option' : 'com_ajax',
 	'module' : 'tennis',
-	'format' : 'debug',
+	'format' : AJAX_FMT,
 	'cmd'    : 'reserve',
 	'date'   : date,
 	'hour'   : hour,
@@ -104,31 +139,21 @@ function reserveReq(cell, date, hour, resType)
 	data   : req,
 
     	success: function(response) {
-	    switch (response) {
-	    case "errInval":
-		message("Invalid request");
-		break;
-	    case "errGuest":
-		message("Please login first");
-		break;
-	    case "errInternal":
-		message("Server internal error");
-		break;
-	    case "errBusy":
-		message("Already reserved");
-		break;
-	    case "errMaxReserv":
-		message("Max reservation number reached");
-		break;
-	    default:
-	    	cell.innerHTML = response;
-		cell.className = (response == '') ? "day" : "day-busy";
+	    data = response.data;
+	    if (!isNaN(parseInt(data)))
+		message(ERR_NAMES[data]);
+	    else {
+	    	cell.innerHTML = data;
+		if (data == "")
+		    resType = 0;
+		cell.className = RES_TYPE_CLASS[resType];
 	    }
 	},
 	
 	error: function(response) {
 	    console.log("ajax failed:");
 	    console.log(response);
+	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })   
 }
@@ -142,7 +167,7 @@ function reserveDay(date, hour)
 	resType = elem ? elem.value : 0;
 	
     if (logged == false) {
-	message("Please log in first");
+	message(ERR_NAMES[ERR_GUEST]);
     	return;
     }
 
@@ -155,7 +180,7 @@ function reserveDay(date, hour)
     if (cell.innerHTML == '') {
 
 	if (checkReq('isUserBusy')) {
-	    message("You'reached max number of reservation");
+	    message(ERR_NAMES[ERR_MAXRESERV]);
 	    return;
 	}
 
@@ -191,7 +216,7 @@ function updateCalendar(cmd, width)
 	'option' : 'com_ajax',
 	'module' : 'tennis',
 	'cmd'    : cmd,
-	'format' : 'debug',
+	'format' : AJAX_FMT,
 	'width'  : width
     };
 
@@ -202,13 +227,14 @@ function updateCalendar(cmd, width)
 	success: function (response) {
 	    /* update whole calendar */
 	    var elem = document.getElementById("calendar");
-	    elem.innerHTML = response;
+	    elem.innerHTML = response.data;
 	    addEvent();
 	},
 	
 	error: function(response) {
 	    console.log("updateCalendar failed");
 	    console.log(response);
+    	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
 }
@@ -223,6 +249,7 @@ function addEvent() {
 
 /* when document ready, add event */
 jQuery(document).ready(function() {
+    getStrings();
     width = jQuery("#calendar").css("width");
     updateCalendar('refreshCal', parseInt(width, 10));
     addEvent();
