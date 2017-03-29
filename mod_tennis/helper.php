@@ -48,11 +48,11 @@ class ModTennisHelper
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
 
-        $query->select($db->quoteName(array('user', 'group_id', 'abonnement', 'naissance')))
-              ->from($db->quoteName('#__user_details'));
+        $query->select($db->quoteName(array('id', 'group_id')))
+              ->from($db->quoteName('#__users'));
         $db->setQuery($query);
 
-        return $db->loadAssocList('user');
+        return $db->loadAssocList('id');
     }
 
     public static function usersSameGroup($details, $user)
@@ -74,19 +74,11 @@ class ModTennisHelper
         $db = JFactory::getDbo();
         $query= $db->getQuery(true);
 
-        /* get all group_id */
-        $query->select($db->quoteName('group_id'))
-              ->from($db->quoteName('#__user_details'))
-              ->order($db->quoteName('group_id') . ' ASC');
         $db->setQuery($query);
-        $groups = $db->load();
-
-        $db->setQuery($query);
-        $query->select($db->quoteName(array('id', 'name', 'username', 'email')))
+        $query->select($db->quoteName(array('id', 'name', 'username', 'email',
+        'group_id', 'abonnement', 'naissance')))
               ->from($db->quoteName('#__users'))
               ->order($db->quoteName('name') . ' ASC');
-
-        $details = ModTennisHelper::loadUserDetails();
 
         $db->setQuery($query);
         $u = $db->loadAssocList('id');
@@ -98,9 +90,9 @@ class ModTennisHelper
             $s .= '<td id="name">' . $d['name'] . '</td>';
             $s .= '<td id="username">' . $d['username'] . '</td>';
             $s .= '<td id="email">' . $d['email'] . '</td>';
-            $s .= '<td id="group_id">' . $details[$id]['group_id'] . '</td>';
-            $s .= '<td id="abo">' . $details[$id]['abonnement'] . '</td>';
-            $s .= '<td id="birth">' . $details[$id]['naissance'] . '</td>';
+            $s .= '<td id="group_id">' . $d['group_id'] . '</td>';
+            $s .= '<td id="abo">' . $d['abonnement'] . '</td>';
+            $s .= '<td id="birth">' . $d['naissance'] . '</td>';
             $s .= '</tr>';
         }
         $s .= '</table>';
@@ -271,7 +263,7 @@ class ModTennisHelper
             $usersSameGroup = $session->get('usersSameGroup');
 
             if ($session->get('userId') != $user->id) {
-                # change user
+                # if user change then reload details and usersSameGroup */
                 $details = NULL;
                 $usersSameGroup = NULL;
                 $session->set('userId', $user->id);
