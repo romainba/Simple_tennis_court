@@ -2,13 +2,16 @@
 
 JHTML::_('behavior.modal', 'a.modal');
 
+const hourWidth = 60;
+const cellWidth = 100;
+
 const RES_TYPE_NONE = 0;
 const RES_TYPE_MEMBER = 1;
 const RES_TYPE_GUEST = 2;
 const RES_TYPE_COURS = 3;
 const RES_TYPE_MANIF = 4;
 
-const RES_TYPE = array("", "membre", "invite", "cours de tennis", "manifestation");
+const RES_TYPE = array("", "membre", "invité", "cours de tennis", "manifestation");
 const RES_TYPE_CLASS = array("day", "day-busy", "day-busy", "day-cours", "day-manif");
 
 const GRP_MANAGER = 6; /* from table */
@@ -19,8 +22,8 @@ const ERR_INTERNAL = 3;
 const ERR_BUSY = 4;
 const ERR_MAXRESERV = 5;
 
-const ERR_NAMES = array("", "Requete invalide", "Veuillez vous identifier",
-    "Erreur interne", "Horaire deja occupe", "Nombre de reservation max atteint");
+const ERR_NAMES = array("", "Requête invalide", "Veuillez vous identifier.",
+    "Erreur interne", "Horaire déjà occupé.", "Nombre de réservation max atteint.");
 
 class ModTennisHelper
 {
@@ -101,8 +104,10 @@ class ModTennisHelper
 
     public static function buildCalendar($cmd, $width)
     {
-        $w = $width - 50 /* hour width */;
-        $num = ($w / 90 /* cell width */) >> 0;
+        $w = $width - hourWidth;
+        $num = ($w / cellWidth) >> 0;
+	if ($num > 7)
+	   $num = 7;
 
         $session = & JFactory::getSession();
         $inc = $session->get('date');
@@ -117,30 +122,35 @@ class ModTennisHelper
         } else
             $session->set('date', $inc);
 
-        $today = new DateTime();
-        $date = new DateTime();
+        $today = new DateTime('now', timezone_open('Europe/Zurich'));
+        $date = new DateTime('now', timezone_open('Europe/Zurich'));
         $date->modify($inc . ' days');
 
         $str = '<style>#calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>';
 
         $str .= '<div style="width:100%;">';
-        $str .= '<div style="float:left;">';
-        $str .= '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>';
-        $str .= $date->format('d M');
-        $str .= '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>';
-        $str .= "</div>";
+
+	$str .= '<div style="float:left; width: 20%">' .
+	     '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>' .
+             $date->format('d M') .
+	     '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>' .
+	     '</div>';
+
+	$str .= '<div style="float: center;">' .
+	     'Il est ' . ltrim($today->format('h'), '0') . ' heures et ' .
+	     ltrim($today->format('i'), '0') . ' minutes.</div>';
 
         $user = JFactory::getUser();
         $groups = $user->get('groups');
 
         $str .= '<div style="float:right;">';
         if (in_array(GRP_MANAGER, $groups)) {
-            $str .= '  type de reservation:<select id="resTypeList" style="width:130px;">';
+            $str .= '  type de réservation:<select id="resTypeList" style="width:130px;">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
-        $str .= "</div></div>";
+        $str .= "</div><br></div>";
 
         $module = JModuleHelper::getModule('mod_tennis');
         $params = new JRegistry($module->params);
@@ -193,11 +203,11 @@ class ModTennisHelper
         $str .= '</table>';
 
         $str .= '<div class="modal hide" id="resType">' .
-            '<div class="modal-content"><p>Selectionnez le type de reservation</p>' .
-            '<p><input type="button" class="resType" id="'.RES_TYPE_MEMBER.'">'.
-            RES_TYPE[RES_TYPE_MEMBER].'</input></p>' .
-            '<p><input type="button" class="resType" id="'.RES_TYPE_GUEST.'">'.
-            RES_TYPE[RES_TYPE_GUEST].'</input></p></div></div>';
+            '<div class="modal-content">Selectionnez le type de réservation:<br>' .
+            '<input type="button" class="resType" id="'.RES_TYPE_MEMBER.'">'.
+            RES_TYPE[RES_TYPE_MEMBER].'</input><br>' .
+            '<input type="button" class="resType" id="'.RES_TYPE_GUEST.'">'.
+            RES_TYPE[RES_TYPE_GUEST].'</input></div></div>';
 
         $str .= '<div class="modal hide" id="message"></div>';
 
@@ -284,7 +294,7 @@ class ModTennisHelper
 
             $inc = $session->get('date') + $input->get('date');
 
-            $date = new DateTime();
+            $date = new DateTime('now', timezone_open('Europe/Zurich'));
             $date->modify($inc . "day");
             $date->setTime($input->get('hour'), 0, 0);
             $d = $date->format('Y-m-d H:i:s');
@@ -294,7 +304,7 @@ class ModTennisHelper
                  * check if max number of reservation is reached
                  */
                 $u = "'" . implode("','", $usersSameGroup) . "'"; /* users in the same group */
-                $today = new DateTime();
+                $today = new DateTime('now', timezone_open('Europe/Zurich'));
                 $query->select($db->quoteName('date'))
                       ->from($db->quoteName('#__reservation'))
                       ->where($db->quoteName('user') . " in ($u) and " .

@@ -1,4 +1,5 @@
 body {
+    background: transparent;
 }
 
 header {
@@ -41,6 +42,8 @@ header {
 
 #calendar {
     width: 100%;    
+    border-radius:10px; 
+    font-size: 13px;
 }
 
 #calendar a {
@@ -75,7 +78,7 @@ header {
 }
 
 #calendar tr.weekdays {
-    height: 20px;
+    height: 22px;
     background: #8e352e;
 }
 
@@ -86,7 +89,6 @@ header {
     border: none !important;
     padding: 10px 6px;
     color: #fff;
-    font-size: 13px;
 }
 
 #calendar td.first-column {
@@ -94,12 +96,13 @@ header {
 }
 
 #calendar .days td {
-    height: 65px;
+    height: 67px;
+    text-align: center;
 }
 
 #calendar .days td.day-hour {
     background: #ffdbdb;
-    text-align: center;
+    text-align: right;
 }
 
 #calendar .days td.day:hover {
@@ -108,33 +111,29 @@ header {
 
 #calendar .days td.day-past {
     background: #f3f3f3;
-    text-align: center;
 }
 
 #calendar .days td.day-busy {
     background: #e6ffe6;
-    text-align: center;
 }
 
 #calendar .days td.day-busy:hover {
     background: #e6efd6;
-    text-align: center;
 }
 
 #calendar .days td.day-cours {
     background: #ff8a84;
-    text-align: center;
 }
 
 #calendar .days td.day-manif {
     background: #3ccc37;
-    text-align: center;
 }
 
 #message, #resType {
     top:20%; left:30%; background-color:lightyellow; 
-    margin:auto; text-align:left; padding:5px;
-    border-radius:10px; border:solid 3px solid #000; opacity:10;
+    text-align:left; padding: 5px;
+    border-radius:10px; border:solid 3px solid #000; opacity:30;
+    margin: auto;
 }
 
 #calendar .event {

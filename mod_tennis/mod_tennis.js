@@ -105,9 +105,9 @@ function message(msg)
     
     popup.css({
 	width: w * 8,
-	height: 60 + h * 11,
+	height: 100 + h * 11,
 	left: jQuery(window).width()/2 - w * 8 /2,
-	top: jQuery(window).height()/2 - (60 + h * 11)/2
+	top: jQuery(window).height()/2 - (100 + h * 11)/2
     });
     
     popup.html('<p align="center">' + msg + '</p>' +
