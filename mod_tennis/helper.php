@@ -126,31 +126,31 @@ class ModTennisHelper
         $date = new DateTime('now', timezone_open('Europe/Zurich'));
         $date->modify($inc . ' days');
 
+        $user = JFactory::getUser();
+        $groups = $user->get('groups');
+
         $str = '<style>#calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>';
 
         $str .= '<div style="width:100%;">';
 
-	$str .= '<div style="float:left; width: 20%">' .
+	$str .= '<div style="float:left; width: 50%">Utilisateur: '.$user->name.'</div>' .
+	     '<div style="float:right; width: 50%; text-align:right;">Il est '.$today->format('G:i').'</div>';
+
+	$str .= '<div style="float:left; width:40%">' .
 	     '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>' .
              $date->format('d M') .
 	     '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>' .
 	     '</div>';
 
-	$str .= '<div style="float: center;">' .
-	     'Il est ' . ltrim($today->format('h'), '0') . ' heures et ' .
-	     ltrim($today->format('i'), '0') . ' minutes.</div>';
-
-        $user = JFactory::getUser();
-        $groups = $user->get('groups');
-
-        $str .= '<div style="float:right;">';
+        $str .= '<div style="float:right; width:60%;text-align:right;">';
         if (in_array(GRP_MANAGER, $groups)) {
-            $str .= '  type de réservation:<select id="resTypeList" style="width:130px;">';
+            $str .= '  type de réservation:<select id="resTypeList" style="width:130px;' .
+	       'height:23px;padding:0;">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
-        $str .= "</div><br></div>";
+        $str .= "</div></div>";
 
         $module = JModuleHelper::getModule('mod_tennis');
         $params = new JRegistry($module->params);
