@@ -106,8 +106,8 @@ class ModTennisHelper
     {
         $w = $width - hourWidth;
         $num = ($w / cellWidth) >> 0;
-	if ($num > 7)
-	   $num = 7;
+        if ($num > 7)
+            $num = 7;
 
         $session = & JFactory::getSession();
         $inc = $session->get('date');
@@ -117,9 +117,9 @@ class ModTennisHelper
         else if ($cmd == 'nextCal')
             $inc++;
 
-        if ($cmd == 'refreshCal') {
+        if ($cmd == 'refreshCal')
             $session->set('width', $width);
-        } else
+        else
             $session->set('date', $inc);
 
         $today = new DateTime('now', timezone_open('Europe/Zurich'));
@@ -129,36 +129,34 @@ class ModTennisHelper
         $user = JFactory::getUser();
         $groups = $user->get('groups');
 
-        $str = '<style>#calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>';
+        $str = '<table class="calendar_header">';
 
-        $str .= '<div style="width:100%;">';
+        $str .= '<tr><td>Utilisateur: '.$user->name.'</td>' .
+            '<td style="text-align:right">Il est '.$today->format('G:i').'</td></tr>';
 
-	$str .= '<div style="float:left; width: 50%">Utilisateur: '.$user->name.'</div>' .
-	     '<div style="float:right; width: 50%; text-align:right;">Il est '.$today->format('G:i').'</div>';
+        $str .= '<tr><td>' .
+            '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>' .
+            $date->format('d M') .
+            '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>' .
+            '</td>';
 
-	$str .= '<div style="float:left; width:40%">' .
-	     '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>' .
-             $date->format('d M') .
-	     '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>' .
-	     '</div>';
-
-        $str .= '<div style="float:right; width:60%;text-align:right;">';
+        $str .= '<td style="text-align:right">';
         if (in_array(GRP_MANAGER, $groups)) {
-            $str .= '  type de réservation:<select id="resTypeList" style="width:130px;' .
-	       'height:23px;padding:0;">';
+            $str .= '  type de réservation:<select id="resTypeList">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
-        $str .= "</div></div>";
+        $str .= "</td></tr></table>";
 
         $module = JModuleHelper::getModule('mod_tennis');
         $params = new JRegistry($module->params);
         $begin = $params->get('start_hour', 8);
         $end = $params->get('end_hour', 20);
 
-        $str .= '<table id="calendar">';
-        $str .= '<tr class="weekdays"><td class="first-column"></td>';
+        $str .= '<style>.calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>' .
+            '<table class="calendar">' .
+            '<tr class="weekdays"><td class="first-column"></td>';
 
         $d = [];
         for ($i = 0; $i < $num; $i++) {

@@ -40,29 +40,47 @@ header {
     width: 80px;
 }
 
-#calendar {
+.calendar {
     width: 100%;    
     border-radius:10px; 
     font-size: 13px;
 }
 
-#calendar a {
+.calendar a {
     color: #8e352e;
     text-decoration: none;
 }
 
-#calendar .weekBtn {
-    width: 40px;
+.calendar_header tr {
+    list-style: none;
+    width: 100%;
+    margin:0;
+    padding:0;
 }
 
-#calendar tr {
+.calendar_header td {
+    width: 50%;
+}
+
+.calendar_header .weekBtn {
+    width: 30px;
+    height:23px;
+}
+
+.calendar_header td select {
+    width: 130px;
+    height: 23px;
+    padding: 0;
+}
+
+.calendar tr {
     list-style: none;
     padding: 0;
     margin: 0;
     width: 100%;
 }
 
-#calendar td {
+.calendar td {
     display: block;
     float: left;
     width:13.3%;
@@ -73,16 +91,16 @@ header {
     margin-bottom: -1px;
 }
 
-#calendar td .first-column {
+.calendar td .first-column {
     width: 100px;
 }
 
-#calendar tr.weekdays {
+.calendar tr.weekdays {
     height: 22px;
     background: #8e352e;
 }
 
-#calendar tr.weekdays td {
+.calendar tr.weekdays td {
     text-align: center;
     text-transform: uppercase;
     line-height: 10px;
@@ -91,41 +109,41 @@ header {
     color: #fff;
 }
 
-#calendar td.first-column {
+.calendar td.first-column {
     width: 50px;
 }
 
-#calendar .days td {
+.calendar .days td {
     height: 67px;
     text-align: center;
 }
 
-#calendar .days td.day-hour {
+.calendar .days td.day-hour {
     background: #ffdbdb;
     text-align: right;
 }
 
-#calendar .days td.day:hover {
+.calendar .days td.day:hover {
     background: #d3d3d3;
 }
 
-#calendar .days td.day-past {
+.calendar .days td.day-past {
     background: #f3f3f3;
 }
 
-#calendar .days td.day-busy {
+.calendar .days td.day-busy {
     background: #e6ffe6;
 }
 
-#calendar .days td.day-busy:hover {
+.calendar .days td.day-busy:hover {
     background: #e6efd6;
 }
 
-#calendar .days td.day-cours {
+.calendar .days td.day-cours {
     background: #ff8a84;
 }
 
-#calendar .days td.day-manif {
+.calendar .days td.day-manif {
     background: #3ccc37;
 }
 
@@ -136,7 +154,7 @@ header {
     margin: auto;
 }
 
-#calendar .event {
+.calendar .event {
     clear: both;
     display: block;
     font-size: 13px;
@@ -151,13 +169,13 @@ header {
     text-decoration: none;
 }
 
-#calendar .event-desc {
+.calendar .event-desc {
     color: #666;
     margin: 3px 0 7px 0;
     text-decoration: none;  
 }
 
-#calendar .other-month {
+.calendar .other-month {
     background: #f5f5f5;
     color: #666;
 }
