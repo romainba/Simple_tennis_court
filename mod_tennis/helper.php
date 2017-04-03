@@ -113,9 +113,9 @@ class ModTennisHelper
         $inc = $session->get('date');
 
         if ($cmd == 'prevCal')
-            $inc--;
+            $inc -= $num;
         else if ($cmd == 'nextCal')
-            $inc++;
+            $inc += $num;
 
         if ($cmd == 'refreshCal')
             $session->set('width', $width);
@@ -130,24 +130,25 @@ class ModTennisHelper
         $groups = $user->get('groups');
 
         $str = '<table class="calendar_header">';
+        
+        $str .= '<tr><td style="width: 50%;">Utilisateur: '.$user->name.'</td>' .
+            '<td style="text-align:right; width: 50%;">Il est '.$today->format('G:i').'</td></tr>'.
+            '</table>';
 
-        $str .= '<tr><td>Utilisateur: '.$user->name.'</td>' .
-            '<td style="text-align:right">Il est '.$today->format('G:i').'</td></tr>';
-
-        $str .= '<tr><td>' .
-            '<input type="submit" class="weekBtn" value="<<" id="prevCal"/>' .
-            $date->format('d M') .
-            '<input type="submit" class="weekBtn" value=">>" id="nextCal"/>' .
-            '</td>';
-
-        $str .= '<td style="text-align:right">';
+        $str .= '<table class="calendar_header">';
+        $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" value="avant" id="prevCal"/></td>';
+        $str .= '<td style="width: 80%;text-align:center">';
         if (in_array(GRP_MANAGER, $groups)) {
-            $str .= '  type de réservation <select id="resTypeList">';
+            $str .= 'type de réservation <select id="resTypeList">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
-        $str .= "</td></tr></table>";
+        $str .= '</td>';
+
+        $str .= '<td style="width: 10%;"><input type="submit" class="weekBtn" value="apres" id="nextCal"/></td>';
+
+	    $str .= '</tr></table>';
 
         $module = JModuleHelper::getModule('mod_tennis');
         $params = new JRegistry($module->params);
@@ -156,13 +157,14 @@ class ModTennisHelper
 
         $str .= '<style>.calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>' .
             '<table class="calendar">' .
-            '<tr class="weekdays"><td class="first-column"></td>';
+            '<tr class="weekdays"><td class="day-hour first-column"></td>';
 
         $d = [];
         for ($i = 0; $i < $num; $i++) {
             $d[$i] = clone $date;
             $d[$i]->modify($i . "day");
-            $str .= '<td class="day-head">' . $d[$i]->format("l") . '</td>';
+            $str .= '<td class="day-head">' . $d[$i]->format("l") . 
+                '<br>'.$d[$i]->format('j M') . '</td>';
         }
         $str .= '</tr>';
 
