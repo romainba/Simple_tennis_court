@@ -142,7 +142,7 @@ class ModTennisHelper
 
         $str .= '<td style="text-align:right">';
         if (in_array(GRP_MANAGER, $groups)) {
-            $str .= '  type de réservation:<select id="resTypeList">';
+            $str .= '  type de réservation <select id="resTypeList">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';

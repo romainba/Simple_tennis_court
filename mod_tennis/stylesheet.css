@@ -1,5 +1,4 @@
 body {
-    background: transparent;
 }
 
 header {
@@ -40,10 +39,11 @@ header {
     width: 80px;
 }
 
-.calendar {
+#calendar {
     width: 100%;    
-    border-radius:10px; 
     font-size: 13px;
+    color: #404040;
+    border: none;
 }
 
 .calendar a {
@@ -51,14 +51,12 @@ header {
     text-decoration: none;
 }
 
-.calendar_header tr {
-    list-style: none;
-    width: 100%;
-    margin:0;
-    padding:0;
+.calendar_header {
+    border: none;
 }
 
 .calendar_header td {
+    border: 0px solid black;
     width: 50%;
 }
 
@@ -71,6 +69,10 @@ header {
     width: 130px;
     height: 23px;
     padding: 0;
+}
+
+.calendar {
+   border: none; 
 }
 
 .calendar tr {
@@ -86,7 +88,7 @@ header {
     width:13.3%;
     padding: 5px;
     box-sizing:border-box;
-    border: 1px solid #ccc;
+    border: 1px solid #595a5a;
     margin-right: -1px;
     margin-bottom: -1px;
 }
