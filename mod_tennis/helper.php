@@ -129,11 +129,9 @@ class ModTennisHelper
         $user = JFactory::getUser();
         $groups = $user->get('groups');
 
-        $str = '<table class="calendar_header">';
-        
-        $str .= '<tr><td style="width: 50%;">Utilisateur: '.$user->name.'</td>' .
-            '<td style="text-align:right; width: 50%;">Il est '.$today->format('G:i').'</td></tr>'.
-            '</table>';
+        $str = "<p>Bonjour ".$user->name.", il est ".$today->format('G:i').". " .
+	     "Si vous souhaitez réserver une plage horaire, veuillez simplement " .
+	     "sélectionner la case correspondante à l'heure et la date souhaitées.</p>";
 
         $str .= '<table class="calendar_header">';
         $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" value="avant" id="prevCal"/></td>';
