@@ -6,13 +6,12 @@ const hourWidth = 60;
 const cellWidth = 100;
 
 const RES_TYPE_NONE = 0;
-const RES_TYPE_MEMBER = 1;
-const RES_TYPE_GUEST = 2;
-const RES_TYPE_COURS = 3;
-const RES_TYPE_MANIF = 4;
+const RES_TYPE_NORMAL = 1;
+const RES_TYPE_COURS = 2;
+const RES_TYPE_MANIF = 3;
 
-const RES_TYPE = array("", "membre", "invité", "cours de tennis", "manifestation");
-const RES_TYPE_CLASS = array("day", "day-busy", "day-busy", "day-cours", "day-manif");
+const RES_TYPE = array("", "normal", "cours de tennis", "manifestation");
+const RES_TYPE_CLASS = array("day", "day-busy", "day-cours", "day-manif");
 
 const GRP_MANAGER = 6; /* from table */
 
@@ -21,9 +20,21 @@ const ERR_GUEST = 2;
 const ERR_INTERNAL = 3;
 const ERR_BUSY = 4;
 const ERR_MAXRESERV = 5;
+const ERR_DUALGUEST = 6;
+const ERR_INVALUSER1 = 7;
+const ERR_INVALUSER2 = 8;
 
 const ERR_NAMES = array("", "Requête invalide", "Veuillez vous identifier.",
-    "Erreur interne", "Horaire déjà occupé.", "Nombre de réservation max atteint.");
+"Erreur interne", "Horaire déjà occupé.", "Nombre de réservation max atteint.",
+"Deux invités non permis", "Utilisateur 1 invalide", "Utilisateur 2 invalide");
+
+const GUEST_NAME = "invité";
+
+function console_log( $data ) {
+  echo '<script>';
+  echo 'console.log('. json_encode( $data ) .')';
+  echo '</script>';
+}
 
 class ModTennisHelper
 {
@@ -51,7 +62,7 @@ class ModTennisHelper
         $db = JFactory::getDbo();
         $query = $db->getQuery(true);
 
-        $query->select($db->quoteName(array('id', 'group_id')))
+        $query->select($db->quoteName(array('id', 'group_id' ,'name')))
               ->from($db->quoteName('#__users'));
         $db->setQuery($query);
 
@@ -66,9 +77,14 @@ class ModTennisHelper
         $g = $details[$user->id]['group_id'];
         $a = array();
         foreach ($details as $u => $d)
-            if ($d['group_id'] == $g)
+            if ($d['group_id'] == $g and $d->id != $user->id)
                 array_push($a, $u);
         return $a;
+    }
+
+    public static function getUserId($details, $name)
+    {
+        return array_search($name, array_column($details, 'name'));
     }
 
     public static function showUsersList()
@@ -102,6 +118,22 @@ class ModTennisHelper
         return $s;
     }
 
+    public static function getUsersName()
+    {
+        $db = JFactory::getDbo();
+        $query= $db->getQuery(true);
+
+        $db->setQuery($query);
+        $query->select($db->quoteName(array('name')))
+              ->from($db->quoteName('#__users'))
+            ->order($db->quoteName('name') . ' ASC');
+
+        $db->setQuery($query);
+        $ret = $db->loadColumn();
+        array_push($ret, GUEST_NAME);
+        return $ret;
+    }
+
     public static function buildCalendar($cmd, $width)
     {
         $w = $width - hourWidth;
@@ -130,12 +162,15 @@ class ModTennisHelper
         $groups = $user->get('groups');
 
         $str = "<p>Bonjour ".$user->name.", il est ".$today->format('G:i').". " .
-	     "Si vous souhaitez réserver une plage horaire, veuillez simplement " .
-	     "sélectionner la case correspondante à l'heure et la date souhaitées.</p>";
+            "Si vous souhaitez réserver une plage horaire, veuillez simplement " .
+            "sélectionner la case correspondante à l'heure et la date souhaitées.</p>";
 
         $str .= '<table class="calendar_header">';
-        $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" value="avant" id="prevCal"/></td>';
+        $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" ' .
+            'value="< avant" id="prevCal"/></td>';
         $str .= '<td style="width: 80%;text-align:center">';
+
+        # comitee members
         if (in_array(GRP_MANAGER, $groups)) {
             $str .= 'type de réservation <select id="resTypeList">';
             for ($i = 1; $i < sizeof(RES_TYPE); $i++)
@@ -144,7 +179,8 @@ class ModTennisHelper
         }
         $str .= '</td>';
 
-        $str .= '<td style="width: 10%;"><input type="submit" class="weekBtn" value="apres" id="nextCal"/></td>';
+        $str .= '<td style="width: 10%;"><input type="submit" class="weekBtn" ' .
+            'value="apres >" id="nextCal"/></td>';
 
 	    $str .= '</tr></table>';
 
@@ -161,7 +197,7 @@ class ModTennisHelper
         for ($i = 0; $i < $num; $i++) {
             $d[$i] = clone $date;
             $d[$i]->modify($i . "day");
-            $str .= '<td class="day-head">' . $d[$i]->format("l") . 
+            $str .= '<td class="day-head">' . $d[$i]->format("l") .
                 '<br>'.$d[$i]->format('j M') . '</td>';
         }
         $str .= '</tr>';
@@ -200,15 +236,30 @@ class ModTennisHelper
         }
         $str .= '</table>';
 
-        $str .= '<div class="modal hide" id="resType">' .
-            '<div class="modal-content">Selectionnez le type de réservation:<br>' .
-            '<input type="button" class="resType" id="'.RES_TYPE_MEMBER.'">'.
-            RES_TYPE[RES_TYPE_MEMBER].'</input><br>' .
-            '<input type="button" class="resType" id="'.RES_TYPE_GUEST.'">'.
-            RES_TYPE[RES_TYPE_GUEST].'</input></div></div>';
+        return $str;
+    }
 
-        $str .= '<div class="modal hide" id="message"></div>';
+    public static function showSelectPlayers($weekday, $hour)
+    {
+        $session = & JFactory::getSession();
+        $user = JFactory::getUser();
 
+        $date = new DateTime('now', timezone_open('Europe/Zurich'));
+        $inc = $weekday + $session->get('date');
+        $date->modify($inc . ' days');
+        
+        $str = '<div class="resRequest">Veuillez sélectionner les deux joueurs pour la réservation du ' .
+            $date->format('d-m-Y') . ' à ' . $hour . ' heure. ' .
+            'Si vous jouez avec un invité vous pouvez selectionner "invité".' .
+            '<div id="SPmsg"></div>' .
+            '<div>joueur 1 <input type="text" class="player" id="player1" list="userlist"' .
+            'required value ="' . $user->name . '" /></div>' .
+            '<div>joueur 2 <input type="text" class="player" id="player2" list="userlist"' .
+            'required value ="" /></div>' .
+            '<input type="button" id="reserveBtn" class="btn btn-default" value="Réserver" align="left"/>' .
+            '<input type="button" id="cancelBtn" class="btn btn-default" value="Annuler" align="right"/>' .
+            '</div>';
+        
         return $str;
     }
 
@@ -255,8 +306,6 @@ class ModTennisHelper
         $cmd = $input->get('cmd');
         if (is_null($cmd))
             return ERR_INVAL;
-
-        $width = $input->get('width');
 
         switch ($cmd) {
         case 'reserve':
@@ -332,6 +381,29 @@ class ModTennisHelper
 
             if (is_null($result)) {
 
+                /* check both player */
+                $p1 = str_replace("_", " ", $input->get('player1'));
+                $p2 = str_replace("_", " ", $input->get('player2'));
+                
+                if ($p1 == '' || $p2 == '')
+                    return ERR_INVAL;
+
+                return $p1 . "__" . GUEST_NAME;
+
+                if ($p1 == GUEST_NAME && $p2 == GUEST_NAME)
+                    return ERR_DUALGUEST;
+
+                if ($p1 == GUEST_NAME || $p2 == GUEST_NAME)
+                    $resType = RES_TYPE_GUEST;
+              
+                $user1 = ModTennisHelper::getUserId($details, $p1);
+                if ($user1 == '')
+                    return ERR_INVALUSER1;
+                    
+                $user2 = ModTennisHelper::getUserId($details, $p2);
+                if ($user2 == '')
+                    return ERR_INVALUSER2;
+                
                 if (ModTennisHelper::resAdd($db, $query, $user, $d, $resType))
                     return ERR_INTERNAL;
 
@@ -343,10 +415,10 @@ class ModTennisHelper
             } else {
                 /* rejected if already reserved by another user */
                 if (!$user->authorise('core.admin') && !in_array($result[0], $usersSameGroup) &&
-                ($resType == RES_TYPE_MEMBER || $resType == RES_TYPE_GUEST))
+                ($resType == RES_TYPE_NORMAL))
                     return ERR_BUSY;
 
-                /* member/guest reservation can't override cours/manif reservation */
+                /* normal reservation can't override cours/manif reservation */
                 if ($result[1] >= RES_TYPE_COURS && $resType < RES_TYPE_COURS)
                     return ERR_BUSY;
 
@@ -364,13 +436,19 @@ class ModTennisHelper
         case 'prevCal':
         case 'nextCal':
         case 'refreshCal':
-            return ModTennisHelper::buildCalendar($cmd, $width);
+            return ModTennisHelper::buildCalendar($cmd, $input->get('width'));
 
         case 'getStrings':
-            return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
+            return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS, GUEST_NAME);
+
+        case 'getUsersName':
+            return ModTennisHelper::getUsersName();
+
+        case 'showSelectPlayers':
+            return ModTennisHelper::showSelectPlayers($input->get('date'), $input->get('hour'));
         }
-        
-        
+
+
         return $ret;
     }
 }
