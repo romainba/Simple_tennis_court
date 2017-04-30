@@ -6,14 +6,10 @@ const RES_TYPE_MANIF = 3;
 
 const ERR_INVAL = 1;
 const ERR_GUEST = 2;
-const ERR_INTERNAL = 3;
-const ERR_BUSY = 4;
-const ERR_MAXRESERV = 5;
-const ERR_DUALGUEST = 6;
-const ERR_INVALUSER1 = 7;
-const ERR_INVALUSER2 = 8;
 
 const AJAX_FMT = "JSON";
+
+const debug = true;
 
 function getStrings()
 {
@@ -35,41 +31,10 @@ function getStrings()
 	},
 
 	error: function(response) {
-	    console.log("getStrings failed");
-	    console.log(response);
+	    debug && console.log("getStrings failed");
+	    debug && console.log(response);
 	}
     })
-}
-
-/* return true if request is true */
-function checkReq(cmd)
-{
-    var	req = {
-	'option' : 'com_ajax',
-	'module' : 'tennis',
-	'format' : AJAX_FMT,
-	'cmd'    : cmd,
-    }, ret = 0;
-
-    jQuery.ajax({
-	type   : 'POST',
-	data   : req,
-	async  : false,
-
-	success: function(response) {
-	    switch (cmd) {
-	    case "isUserBusy":
-		ret = response.data;
-		break;
-	    }
-	},
-	error: function(response) {
-	    console.log("ajax failed:");
-	    console.log(response);
-	    ret = ERR_INTERNAL;
-	}
-    })
-    return ret;
 }
 
 function setCookie(cname, cvalue, exdays) {
@@ -124,7 +89,10 @@ function message(msg)
  */
 function reserveReq(resType, player1, player2, cell, date, hour, msgElem)
 {
-    var	ret = 0, req = {
+    var	ret = 0,
+	p1 = (player1 == null) ? null : player1.replace(" ", "_"),
+	p2 = (player2 == null) ? null : player2.replace(" ", "_"),
+	req = {
 	'option' : 'com_ajax',
 	'module' : 'tennis',
 	'format' : AJAX_FMT,
@@ -132,11 +100,11 @@ function reserveReq(resType, player1, player2, cell, date, hour, msgElem)
 	'date'   : date,
 	'hour'   : hour,
 	'resType': resType,
-	'player1': JSON.stringify(player1),
-	'player2': unescape(encodeURIComponent(player2))
+	'player1': p1,
+	'player2': p2
     };
 
-    jQuery.ajax({
+     jQuery.ajax({
 	type   : 'POST',
 	data   : req,
 	dataType: 'json',
@@ -163,8 +131,8 @@ function reserveReq(resType, player1, player2, cell, date, hour, msgElem)
 	},
 
 	error: function(response) {
-	    console.log("ajax failed:");
-	    console.log(response);
+	    debug && console.log("ajax failed:");
+	    debug && console.log(response);
 	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -196,11 +164,10 @@ function showSelectPlayers(cell, date, hour)
 
 		/* replace calendar with player selection form */
 		var elem = document.getElementById("calendar");
-		console.log(data);
+		debug && console.log(data);
 		elem.innerHTML = data; 
 
 		jQuery("#reserveBtn").click(function(event) {
-		    console.log(document.getElementById("player1").value);
 		    reserveReq(RES_TYPE_NORMAL,
 			       document.getElementById("player1").value,
 			       document.getElementById("player2").value,
@@ -215,8 +182,8 @@ function showSelectPlayers(cell, date, hour)
 	},
 
 	error: function(response) {
-	    console.log("ajax failed:");
-	    console.log(response);
+	    debug && console.log("ajax failed:");
+	    debug && console.log(response);
 	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -238,22 +205,19 @@ function reserveDay(date, hour)
 
     /* if res_type != 0 then priority over any normal reservation */
     if (resType == RES_TYPE_COURS || resType == RES_TYPE_MANIF) {
-	reserveReq(resType, null, null, cell, date, hour, false);
+	reserveReq(resType, null, null, cell, date, hour, null);
 	return;
     }
 
     if (cell.innerHTML == '') {
-
-	if (checkReq('isUserBusy')) {
-	    message(ERR_NAMES[ERR_MAXRESERV]);
-	    return;
-	}
-
+	
 	showSelectPlayers(cell, date, hour);
 
-    } else
-	/* cancel reservation */
-	reserveReq(RES_TYPE_NONE, null, null, cell, date, hour, false);
+    } else {
+	debug && console.log("cancel reservation");
+
+	reserveReq(RES_TYPE_NONE, null, null, cell, date, hour, null);
+    }
 }
 
 function updateCalendar(cmd, width)
@@ -278,8 +242,8 @@ function updateCalendar(cmd, width)
 	},
 
 	error: function(response) {
-	    console.log("ajax updateCalendar failed");
-	    console.log(response);
+	    debug && console.log("ajax updateCalendar failed");
+	    debug && console.log(response);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -306,7 +270,7 @@ function filldataList()
 	data : req,
 
 	success: function (response) {
-	    console.log(response.data);
+	    debug && console.log(response.data);
 	    
 	    response.data.forEach(function(item) {
 		var option = document.createElement('option');
@@ -316,8 +280,8 @@ function filldataList()
 	},
 
 	error: function(response) {
-	    console.log("ajax getUsersName failed");
-	    console.log(response);
+	    debug && console.log("ajax getUsersName failed");
+	    debug && console.log(response);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
