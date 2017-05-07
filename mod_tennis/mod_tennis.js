@@ -139,7 +139,7 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 		if (msgElem == null)
 		    message(ERR_NAMES[data]);
 		else {
-		    msgElem.innerHTML = ERR_NAMES[data];
+		    msgElem.innerHTML = "Attention: " + ERR_NAMES[data] + ".";
 		    msgElem.style.margin = "10px 0px 10px 0px";
 		}
 	    }
@@ -217,7 +217,6 @@ function showSelPlayer(date, hour, cell)
 		e = showCal(false);
 		e.innerHTML = data;
 
-		//debug && console.log(data);
 		jQuery(".player").clearSearch();
 		
 		jQuery("#reserveBtn").click(function(event) {
@@ -397,14 +396,16 @@ jQuery(document).ready(function() {
     showCalHeader();
     showCalendar('currCal', parseInt(width, 10));
 
-    if (detectMob() == false)
-	jQuery(window).on('resize', function() {
-	    var w = jQuery("#calendar").css("width");
-	    if (w != width) {
-    		width = w;
-    		showCalendar('currCal', parseInt(w, 10));
-	    }
-	});
+    jQuery(window).on('resize', function() {
+	e = document.getElementById("calendar");
+	if (e.style.display == 'none')
+	    return;
+	var w = jQuery("#calendar").css("width");
+	if (w != width) {
+    	    width = w;
+    	    showCalendar('currCal', parseInt(w, 10));
+	}
+    });
 })
 
 jQuery(window).on('unload', function() {
@@ -412,9 +413,3 @@ jQuery(window).on('unload', function() {
     debug && console.log("onbeforeunload");
     reserveFree(null, null, null);
 });
-
-// jQuery(function() {
-//     jQuery(".player").clearSearch({
-// 	callback: function() { console.log("cleared"); }
-//     });
-// });

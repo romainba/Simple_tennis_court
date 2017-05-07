@@ -33,10 +33,10 @@ const ERR_NAMES = array("",
 "Une erreur interne s'est produite",
 "Horaire déjà occupé",
 "Il n'est pas permis de mettre deux fois le meme joueur",
-"Le joueur 1 est invalide",
-"Le joueur 2 est invalide",
-"Le Joueur 1 a déjà une réservation",
-"Le joueur 2 a déjà une réservation",
+"Le premier joueur est invalide",
+"Le deuxi&egrave;me joueur est invalide",
+"Le premier Joueur a déjà une réservation",
+"Le deuxi&egrave;me joueur a déjà une réservation",
 "Vous n'avez pas la permissions de réserver pour les deux joueurs");
 
 class ModTennisHelper
@@ -124,7 +124,8 @@ class ModTennisHelper
         # to fill cal-header division
         $str = "<p>Bonjour ".$user->name.", il est ".$today->format('G:i').". " .
             "Si vous souhaitez réserver une plage horaire, veuillez simplement " .
-            "sélectionner la case correspondante à l'heure et la date souhaitées.</p>";
+            "sélectionner la case correspondante à l'heure et la date souhaitées.</p>".
+            "<p>Pour annuler une réservation, il suffit de resélectionner votre case.</p>";
 
         $str .= '<table class="calendar_header">';
         $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" ' .
@@ -259,8 +260,12 @@ class ModTennisHelper
         /* to fill resRequest div */
         $str = '<p>Veuillez sélectionner les deux joueurs '.
             'pour la réservation du ' . $date->format('d M') . ' à ' . $hour . ' heure. '.
-            'Si vous jouez avec un invité vous pouvez selectionner "invite".</p>'.
-            '<p>Le joueur est identifié avec prénom.nom sans accent.</p>'.
+            'Si vous jouez avec un invité, veuillez selectionner "invite".</p>'.
+            '<p>Le joueur est identifié avec le prénom.nom et sans accent.</p>'.
+            '<p>Dans le cas o&ugrave; vous avez un emp&ecirc;chement pour honnorer votre réservation, '.
+            "vous &ecirc;tes cordialement invit&eacute; &agrave; l'annuler afin que le court soit ".
+            ' libre pour un autre membre.</p>'.
+            
             '<div id="SPmsg"></div>'.
 
             '<div style="clear:both;padding:5px;">'.
