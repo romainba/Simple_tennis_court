@@ -11,6 +11,8 @@ const AJAX_FMT = "JSON";
 
 const debug = true;
 
+var width;
+
 function getStrings()
 {
     var req = {
@@ -23,6 +25,7 @@ function getStrings()
     jQuery.ajax({
 	type   : 'POST',
 	data : req,
+	async: false,
 
 	success: function (response) {
 	    ERR_NAMES = response.data[0];
@@ -84,49 +87,61 @@ function message(msg)
     });
 }
 
+
+function showCal(cal)
+{
+    var e = document.getElementById("cal-header");
+    e.style.display = cal ? '' : 'none';
+    e = document.getElementById("calendar");
+    e.style.display = cal ? '' : 'none';
+    e = document.getElementById("sel-player");
+    e.style.display = cal ? 'none' : '';
+    return e;
+}
+
 /* For the current user, if date & hour is free then add reservation
  * else remove it.
  */
-function reserveReq(resType, player1, player2, cell, date, hour, msgElem)
+function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 {
     var	ret = 0,
 	p1 = (player1 == null) ? null : player1.replace(" ", "_"),
 	p2 = (player2 == null) ? null : player2.replace(" ", "_"),
 	req = {
-	'option' : 'com_ajax',
-	'module' : 'tennis',
-	'format' : AJAX_FMT,
-	'cmd'    : 'reserve',
-	'date'   : date,
-	'hour'   : hour,
-	'resType': resType,
-	'player1': p1,
-	'player2': p2
-    };
+	    'option' : 'com_ajax',
+	    'module' : 'tennis',
+	    'format' : AJAX_FMT,
+	    'cmd'    : 'reserve',
+	    'date'   : date,
+	    'hour'   : hour,
+	    'resType': resType,
+	    'player1': p1,
+	    'player2': p2
+	};
 
-     jQuery.ajax({
+    jQuery.ajax({
 	type   : 'POST',
 	data   : req,
-	dataType: 'json',
 
     	success: function(response) {
-	    data = response.data;
-	    if (!isNaN(parseInt(data))) {
+	    data = parseInt(response.data);
+
+	    if (isNaN(data)) {
+		/* update cell in calendar */
+		cell.innerHTML = response.data;
+		cell.className = (response.data == "") ?
+		    RES_TYPE_CLASS[RES_TYPE_NONE] : RES_TYPE_CLASS[resType];
+
+		if (msgElem)
+		    showCal(true);
+	    } else {
+		/* error */
 		if (msgElem == null)
 		    message(ERR_NAMES[data]);
 		else {
 		    msgElem.innerHTML = ERR_NAMES[data];
 		    msgElem.style.margin = "10px 0px 10px 0px";
 		}
-	    }
-	    else {
-	    	cell.innerHTML = data;
-		if (data == "")
-		    resType = 0;
-		cell.className = RES_TYPE_CLASS[resType];
-
-		if (msgElem != null)
-		    updateCalendar('refreshCal', parseInt(width, 10));
 	    }
 	},
 
@@ -138,7 +153,45 @@ function reserveReq(resType, player1, player2, cell, date, hour, msgElem)
     })
 }
 
-function showSelectPlayers(cell, date, hour)
+function reserveFree(date, hour, cell)
+{
+    var	ret = 0,
+	req = {
+	'option' : 'com_ajax',
+	'module' : 'tennis',
+	'format' : AJAX_FMT,
+	'cmd'    : 'free',
+	'date'   : date,
+	'hour'   : hour,
+    };
+
+    debug && console.log("reserverFree");
+    
+     jQuery.ajax({
+	type   : 'POST',
+	data   : req,
+
+    	success: function(response) {
+	    data = parseInt(response.data);
+	    if (data)
+		message(ERR_NAMES[data]);
+
+	    if (cell != null) {
+		cell.innerHTML = '';
+		cell.className = RES_TYPE_CLASS[RES_TYPE_NONE];
+		showCal(true);
+	    }
+	},
+
+	error: function(response) {
+	    debug && console.log("ajax failed:");
+	    debug && console.log(response);
+	    alert(ERR_NAMES[ERR_INTERNAL]);
+	}
+    })
+}
+
+function showSelPlayer(date, hour, cell)
 {
     filldataList();
 
@@ -146,7 +199,7 @@ function showSelectPlayers(cell, date, hour)
 	'option' : 'com_ajax',
 	'module' : 'tennis',
 	'format' : AJAX_FMT,
-	'cmd'    : 'showSelectPlayers',
+	'cmd'    : 'selPlayer',
 	'date'   : date,
 	'hour'   : hour,
     };
@@ -161,22 +214,22 @@ function showSelectPlayers(cell, date, hour)
 	    if (!isNaN(parseInt(data)))
 		message(ERR_NAMES[data]);
 	    else {
+		e = showCal(false);
+		e.innerHTML = data;
 
-		/* replace calendar with player selection form */
-		var elem = document.getElementById("calendar");
-		debug && console.log(data);
-		elem.innerHTML = data; 
-
+		//debug && console.log(data);
+		jQuery(".player").clearSearch();
+		
 		jQuery("#reserveBtn").click(function(event) {
 		    reserveReq(RES_TYPE_NORMAL,
 			       document.getElementById("player1").value,
 			       document.getElementById("player2").value,
-			       cell, date, hour,
-			       document.getElementById("SPmsg"));
+			       date, hour,
+			       document.getElementById("SPmsg"), cell);
 		})
-		
+
 		jQuery("#cancelBtn").click(function(event) {
-		    updateCalendar('refreshCal', parseInt(width, 10));
+		    reserveFree(date, hour, cell);
 		})
 	    }
 	},
@@ -205,22 +258,22 @@ function reserveDay(date, hour)
 
     /* if res_type != 0 then priority over any normal reservation */
     if (resType == RES_TYPE_COURS || resType == RES_TYPE_MANIF) {
-	reserveReq(resType, null, null, cell, date, hour, null);
+	reserveReq(resType, null, null, date, hour, null, cell);
 	return;
     }
 
     if (cell.innerHTML == '') {
-	
-	showSelectPlayers(cell, date, hour);
+
+	showSelPlayer(date, hour, cell);
 
     } else {
 	debug && console.log("cancel reservation");
 
-	reserveReq(RES_TYPE_NONE, null, null, cell, date, hour, null);
+	reserveReq(RES_TYPE_NONE, null, null, date, hour, null, cell);
     }
 }
 
-function updateCalendar(cmd, width)
+function showCalendar(cmd, width)
 {
     var req = {
 	'option' : 'com_ajax',
@@ -235,21 +288,56 @@ function updateCalendar(cmd, width)
 	data : req,
 
 	success: function (response) {
-	    /* update whole calendar */
 	    var elem = document.getElementById("calendar");
-	    elem.innerHTML = response.data;
-	    addEvent();
+	    /* update whole calendar */
+	    if (!isNaN(parseInt(response.data)))
+		elem.innerHTML = ERR_NAMES[response.data];
+	    else
+		elem.innerHTML = response.data;
+	    elem.style.display = '';
 	},
 
 	error: function(response) {
-	    debug && console.log("ajax updateCalendar failed");
+	    debug && console.log("ajax showCalendar failed");
 	    debug && console.log(response);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
 }
 
-var width;
+function showCalHeader()
+{
+    var req = {
+	'option' : 'com_ajax',
+	'module' : 'tennis',
+	'cmd'    : 'calHeader',
+	'format' : AJAX_FMT,
+    };
+
+    jQuery.ajax({
+	type   : 'POST',
+	data : req,
+
+	success: function (response) {
+	    var elem = document.getElementById("cal-header");
+	    /* update whole calendar */
+	    if (!isNaN(parseInt(response.data)))
+		elem.innerHTML = ERR_NAMES[response.data];
+	    else {
+		elem.innerHTML = response.data;
+		
+	    }
+	    elem.style.display = '';
+	    addEvent();
+	},
+
+	error: function(response) {
+	    debug && console.log("ajax showCalHeader failed");
+	    debug && console.log(response);
+    	    alert(ERR_NAMES[ERR_INTERNAL]);
+	}
+    })
+}
 
 // Fill dataList with all user names
 function filldataList()
@@ -270,8 +358,6 @@ function filldataList()
 	data : req,
 
 	success: function (response) {
-	    debug && console.log(response.data);
-	    
 	    response.data.forEach(function(item) {
 		var option = document.createElement('option');
 		option.value = item;
@@ -290,25 +376,45 @@ function filldataList()
 
 function addEvent() {
     jQuery(".weekBtn").click(function(event) {
-	updateCalendar(event.target.id, width);
+	showCalendar(event.target.id, width);
     })
+}
+
+function detectMob() { 
+    return (navigator.userAgent.match(/Android/i)
+	    || navigator.userAgent.match(/webOS/i)
+	    || navigator.userAgent.match(/iPhone/i)
+	    || navigator.userAgent.match(/iPad/i)
+	    || navigator.userAgent.match(/iPod/i)
+	    || navigator.userAgent.match(/BlackBerry/i)
+	    || navigator.userAgent.match(/Windows Phone/i)) != null;
 }
 
 /* when document ready, add event */
 jQuery(document).ready(function() {
     getStrings();
     width = jQuery("#calendar").css("width");
-    updateCalendar('refreshCal', parseInt(width, 10));
+    showCalHeader();
+    showCalendar('currCal', parseInt(width, 10));
 
-    addEvent();
+    if (detectMob() == false)
+	jQuery(window).on('resize', function() {
+	    var w = jQuery("#calendar").css("width");
+	    if (w != width) {
+    		width = w;
+    		showCalendar('currCal', parseInt(w, 10));
+	    }
+	});
 })
 
-/* when window is resized */
-jQuery(window).on('resize', function() {
-    var w = jQuery("#calendar").css("width");
-    if (w != width) {
-	width = w;
-	/* to refresh calendar */
-	updateCalendar('refreshCal', parseInt(w, 10));
-    }
+jQuery(window).on('unload', function() {
+    /* free any on-going reservation */
+    debug && console.log("onbeforeunload");
+    reserveFree(null, null, null);
 });
+
+// jQuery(function() {
+//     jQuery(".player").clearSearch({
+// 	callback: function() { console.log("cleared"); }
+//     });
+// });
