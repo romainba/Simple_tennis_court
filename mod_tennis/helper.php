@@ -32,10 +32,10 @@ const ERR_NAMES = array("",
 "Veuillez vous identifier",
 "Une erreur interne s'est produite",
 "Horaire déjà occupé",
-"Il n'est pas permis de mettre deux fois le meme joueur",
+"Il n'est pas permis de mettre deux fois le m&ecirc;me joueur",
 "Le premier joueur est invalide",
 "Le deuxi&egrave;me joueur est invalide",
-"Le premier Joueur a déjà une réservation",
+"Le premier joueur a déjà une réservation",
 "Le deuxi&egrave;me joueur a déjà une réservation",
 "Vous n'avez pas la permissions de réserver pour les deux joueurs");
 
