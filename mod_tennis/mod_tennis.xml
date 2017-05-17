@@ -39,14 +39,11 @@
 	     default="2"
 	     label="Number of week to show"
 	     description="Number of week to show one the same page" />
-      <field name="format"
+      <field name="delay"
 	     type="list"
-	     default="debug"
-	     label="format"
+	     default="45"
+	     label="delai en minutes pour pouvoir reserver a nouveau"
 	     description="AJAX format">
-	<option value="debug">Debug</option>
-	<option value="raw">Raw</option>
-	<option value="json">JSON</option>
       </field>
     </fieldset>
   </fields>

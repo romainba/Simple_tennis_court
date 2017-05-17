@@ -2,8 +2,8 @@
 
 JHTML::_('behavior.modal', 'a.modal');
 
-const hourWidth = 60;
-const cellWidth = 100;
+const hourWidth = 50; /* pixel */
+const cellWidth = 100; /* pixel */
 
 const RES_TYPE_NONE = 0;
 const RES_TYPE_NORMAL = 1;
@@ -165,11 +165,13 @@ class ModTennisHelper
     public static function buildCalendar($cmd, $width)
     {
         # to fill calendar division
-        $w = $width - hourWidth;
+        $w = $width - (hourWidth);
         $num = ($w / cellWidth) >> 0;
         if ($num > 7)
             $num = 7;
-
+        $cell_width = (($w / $num) >> 0) + 1;
+        $cell_width = $cell_width * 100 / $width;
+        
         $session = &JFactory::getSession();
         $inc = $session->get('date');
 
@@ -195,9 +197,9 @@ class ModTennisHelper
         $begin = $params->get('start_hour', 8);
         $end = $params->get('end_hour', 20);
 
-        $str .= '<style>.calendar td { width:' . ($w * 100 / $num) / $width . '%; }</style>' .
+        $str .= '<style>.calendar td { width:'.$cell_width.'%;}</style>'.
             '<table class="calendar">' .
-            '<tr class="weekdays"><td class="day-hour first-column"></td>';
+            '<tr class="weekdays"><td class="first-column"></td>';
 
         $d = [];
         for ($i = 0; $i < $num; $i++) {
@@ -288,14 +290,21 @@ class ModTennisHelper
         return $str;
     }
 
-    public static function checkUserBusy(&$db, &$query, $user)
+    public static function checkUserBusy(&$db, &$query, $user, $delay)
     {
+        # No limitation for invite
+        $u = JFactory::getUser($user);
+        if ($u->username == "invite")
+            return false;
+
         $today = new DateTime('now', timezone_open('Europe/Zurich'));
+        $today->modify(-$delay .' minutes');
+
         $query->select($db->quoteName('date'))
               ->from($db->quoteName('#__reservation'))
               ->where("(" . $db->quoteName('user1') . "=" . $db->quote($user) . " or " .
               $db->quoteName('user2') . "=" . $db->quote($user) .") and " .
-              $db->quoteName('date') . ">=" . $db->quote($today->format('Y-m-d H:00:00')) .
+              $db->quoteName('date') . ">=" . $db->quote($today->format('Y-m-d H:i:00')) .
               " and " . $db->quoteName('type') . "<" . $db->quote(RES_TYPE_COURS));
 
         try {
@@ -329,15 +338,15 @@ class ModTennisHelper
         return 0;
     }
 
-    public static function resUpdate($user1, $user2, $date, $type)
+    public static function resUpdate($user1, $user2, $date, $type, $delay)
     {
         $db = &JFactory::getDbo();
         $query = $db->getQuery(true);
 
         if ($type < RES_TYPE_COURS) {
-            if (ModTennisHelper::checkUserBusy($db, $query, $user1))
+            if (ModTennisHelper::checkUserBusy($db, $query, $user1, $delay))
                 return ERR_USER1_BUSY;
-            if (ModTennisHelper::checkUserBusy($db, $query, $user2))
+            if (ModTennisHelper::checkUserBusy($db, $query, $user2, $delay))
                 return ERR_USER2_BUSY;
         }
  
@@ -418,9 +427,9 @@ class ModTennisHelper
  		$input  = JFactory::getApplication()->input;
 
 		$module = JModuleHelper::getModule('tennis');
-		$params = new JRegistry();
-		$params->loadString($module->params);
-
+        $params = new JRegistry($module->params);
+        $delay = $params->get('delay', 45);
+        
         $cmd = $input->get('cmd');
         if (is_null($cmd))
             return ERR_INVAL;
@@ -516,7 +525,7 @@ class ModTennisHelper
                     $user2 = NULL;
                     $v = RES_TYPE[$resType];
                 }
-                $ret = ModTennisHelper::resUpdate($user1, $user2, $d, $resType);
+                $ret = ModTennisHelper::resUpdate($user1, $user2, $d, $resType, $delay);
                 if ($ret)
                     return $ret;
 

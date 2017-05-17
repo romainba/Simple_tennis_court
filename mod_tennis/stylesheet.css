@@ -93,10 +93,10 @@ header {
 .calendar td {
     display: block;
     float: left;
-    width:13.3%;
     padding: 5px;
     box-sizing:border-box;
-    border: 1px solid #595a5a;
+    border: 1px solid #594a4a;
+    border-radius:3px;
     margin-right: -1px;
     margin-bottom: -1px;
 }
@@ -141,7 +141,8 @@ header {
 }
 
 .calendar .days td.day-past {
-    background: #f3f3f3;
+    color: #999999;
+    background: #f5f5f5;
 }
 
 .calendar .days td.day-busy {
