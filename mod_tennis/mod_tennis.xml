@@ -32,7 +32,7 @@
       <field name="max_reserv"
 	     type="text"
 	     default="1"
-	     label="Maximum number of reservation"
+	     label="Max. number of reservation"
 	     description="Maximum number of reservation allowed" />
       <field name="nb_week"
 	     type="text"
@@ -40,10 +40,10 @@
 	     label="Number of week to show"
 	     description="Number of week to show one the same page" />
       <field name="delay"
-	     type="list"
+	     type="text"
 	     default="45"
-	     label="delai en minutes pour pouvoir reserver a nouveau"
-	     description="AJAX format">
+	     label="reservation delay"
+	     description="delai en minutes avant de pouvoir reserver a nouveau">
       </field>
     </fieldset>
   </fields>
