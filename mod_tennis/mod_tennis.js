@@ -6,6 +6,7 @@ const RES_TYPE_MANIF = 3;
 
 const ERR_INVAL = 1;
 const ERR_GUEST = 2;
+const ERR_INTERNAL = 3;
 
 const AJAX_FMT = "JSON";
 
@@ -96,6 +97,9 @@ function showCal(cal)
     e.style.display = cal ? '' : 'none';
     e = document.getElementById("sel-player");
     e.style.display = cal ? 'none' : '';
+    
+    cal && showCalendar('currCal', parseInt(width, 10));
+
     return e;
 }
 
@@ -124,7 +128,7 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 	data   : req,
 
     	success: function(response) {
-	    data = parseInt(response.data);
+	    var data = parseInt(response.data);
 
 	    if (isNaN(data)) {
 		/* update cell in calendar */
@@ -153,34 +157,28 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
     })
 }
 
-function reserveFree(date, hour, cell)
+function reserveCancel()
 {
     var	ret = 0,
 	req = {
 	'option' : 'com_ajax',
 	'module' : 'tennis',
 	'format' : AJAX_FMT,
-	'cmd'    : 'free',
-	'date'   : date,
-	'hour'   : hour,
+	'cmd'    : 'reserveCancel',
     };
 
-    debug && console.log("reserverFree");
+    debug && console.log("reserveCancel");
     
      jQuery.ajax({
 	type   : 'POST',
 	data   : req,
 
     	success: function(response) {
-	    data = parseInt(response.data);
+	    var data = parseInt(response.data);
 	    if (data)
 		message(ERR_NAMES[data]);
 
-	    if (cell != null) {
-		cell.innerHTML = '';
-		cell.className = RES_TYPE_CLASS[RES_TYPE_NONE];
-		showCal(true);
-	    }
+	    showCal(true);
 	},
 
 	error: function(response) {
@@ -210,11 +208,11 @@ function showSelPlayer(date, hour, cell)
 	dataType: 'json',
 
     	success: function(response) {
-	    data = response.data;
+	    var data = response.data;
 	    if (!isNaN(parseInt(data)))
 		message(ERR_NAMES[data]);
 	    else {
-		e = showCal(false);
+		var e = showCal(false);
 		e.innerHTML = data;
 
 		jQuery(".player").clearSearch();
@@ -228,7 +226,7 @@ function showSelPlayer(date, hour, cell)
 		})
 
 		jQuery("#cancelBtn").click(function(event) {
-		    reserveFree(date, hour, cell);
+		    reserveCancel();
 		})
 	    }
 	},
@@ -287,13 +285,13 @@ function showCalendar(cmd, width)
 	data : req,
 
 	success: function (response) {
-	    var elem = document.getElementById("calendar");
+	    var e = document.getElementById("calendar");
 	    /* update whole calendar */
 	    if (!isNaN(parseInt(response.data)))
-		elem.innerHTML = ERR_NAMES[response.data];
+		e.innerHTML = ERR_NAMES[response.data];
 	    else
-		elem.innerHTML = response.data;
-	    elem.style.display = '';
+		e.innerHTML = response.data;
+	    e.style.display = '';
 	},
 
 	error: function(response) {
@@ -318,15 +316,15 @@ function showCalHeader()
 	data : req,
 
 	success: function (response) {
-	    var elem = document.getElementById("cal-header");
+	    var e = document.getElementById("cal-header");
 	    /* update whole calendar */
 	    if (!isNaN(parseInt(response.data)))
-		elem.innerHTML = ERR_NAMES[response.data];
+		w.innerHTML = ERR_NAMES[response.data];
 	    else {
-		elem.innerHTML = response.data;
+		e.innerHTML = response.data;
 		
 	    }
-	    elem.style.display = '';
+	    e.style.display = '';
 	    addEvent();
 	},
 
@@ -394,13 +392,14 @@ jQuery(document).ready(function() {
     getStrings();
     width = jQuery("#calendar").css("width");
     showCalHeader();
-    showCalendar('currCal', parseInt(width, 10));
+    showCal(true);
 
     jQuery(window).on('resize', function() {
-	e = document.getElementById("calendar");
+	var e = document.getElementById("calendar");
 	if (e.style.display == 'none')
 	    return;
 	var w = jQuery("#calendar").css("width");
+	/* check calendar shown */
 	if (w != width) {
     	    width = w;
     	    showCalendar('currCal', parseInt(w, 10));
@@ -408,8 +407,7 @@ jQuery(document).ready(function() {
     });
 })
 
-jQuery(window).on('unload', function() {
-    /* free any on-going reservation */
-    debug && console.log("onbeforeunload");
-    reserveFree(null, null, null);
-});
+/* to add:
+ * - automatic refresh
+ * - user management with group_id and abonnement
+ */
