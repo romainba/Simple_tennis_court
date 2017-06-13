@@ -83,36 +83,6 @@ class ModTennisHelper
         return $db->loadAssocList('id', 'username');
     }
 
-    public static function showUsersList()
-    {
-        /* show users per group_id */
-        $db = &JFactory::getDbo();
-        $query = $db->getQuery(true);
-
-        $query->select($db->quoteName(array('id', 'name', 'username', 'email',
-        'group_id', 'abonnement', 'naissance')))
-              ->from($db->quoteName('#__users'))
-              ->order($db->quoteName('name').' ASC');
-
-        $db->setQuery($query);
-        $u = $db->loadAssocList('id');
-
-        $s = '<table class="usersList" style="width:100%;">';
-        $s .= '<tr>';
-        foreach ($u as $id => $d) {
-            $s .= '<tr user_id="'.$id.'">';
-            $s .= '<td id="name">'.$d['name'].'</td>';
-            $s .= '<td id="username">'.$d['username'].'</td>';
-            $s .= '<td id="email">'.$d['email'].'</td>';
-            $s .= '<td id="group_id">'.$d['group_id'].'</td>';
-            $s .= '<td id="abo">'.$d['abonnement'].'</td>';
-            $s .= '<td id="birth">'.$d['naissance'].'</td>';
-            $s .= '</tr>';
-        }
-        $s .= '</table>';
-        return $s;
-    }
-
     public static function buildCalHeader()
     {
         $user = &JFactory::getUser();
