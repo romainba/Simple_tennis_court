@@ -28,6 +28,7 @@ const ERR_USER2_BUSY = 9;
 const ERR_NOT_ALLOWED = 10;
 const ERR_USER1_DISABLED = 11;
 const ERR_USER2_DISABLED = 12;
+const ERR_TIMEOUT = 13;
 
 const ERR_NAMES = array("",
 "La requête est invalide",
@@ -41,24 +42,25 @@ const ERR_NAMES = array("",
 "Le deuxi&egrave;me joueur a déjà une réservation",
 "Vous n'avez pas la permissions de réserver pour les deux joueurs",
 "Le premier joueur est non actif",
-"Le deuxi&egrave;me joueur est non actif");
+"Le deuxi&egrave;me joueur est non actif",
+"La requ&ecirc;te a expirée, veuillez annuler et réessayer");
 
 class ModTennisHelper
 {
     public static function getWeekReservation($date, &$params)
     {
-        $db = &JFactory::getDbo();
-        $query= $db->getQuery(true);
-
         /* delete any pending reservation first */
         $ret = ModTennisHelper::resDelete(null, null, $params);
         if ($ret)
             return $ret;
-            
+
         /* get now all reservation of the week */
         $start = $date->format('Y-m-d');
         $date->modify("+7 days");
         $end = $date->format('Y-m-d');
+
+        $db = &JFactory::getDbo();
+        $query= $db->getQuery(true);
 
         $query->select($db->quoteName(array('id', 'user1', 'user2', 'date', 'type')))
               ->from($db->quoteName('#__reservation'))
@@ -120,6 +122,8 @@ class ModTennisHelper
     {
         if ($type < RES_TYPE_COURS)
             $v = $name1 .'<br>'.$name2;
+        else if ($type == RES_TYPE_OPENED)
+            $v = $name1 . '<br>en cours';
         else
             $v = RES_TYPE[$type];
         return $v;
@@ -134,7 +138,7 @@ class ModTennisHelper
             $num = 7;
         $cell_width = (($w / $num) >> 0) + 1;
         $cell_width = $cell_width * 100 / $width;
-        
+
         $session = &JFactory::getSession();
         $inc = $session->get('date');
 
@@ -158,7 +162,7 @@ class ModTennisHelper
         $begin = $params->get('start_hour');
         $end = $params->get('end_hour');
 
-        $str .= '<style>.calendar td { width:'.$cell_width.'%;}</style>'.
+        $str = '<style>.calendar td { width:'.$cell_width.'%;}</style>'.
             '<table class="calendar">' .
             '<tr class="weekdays"><td class="first-column"></td>';
 
@@ -211,7 +215,7 @@ class ModTennisHelper
     {
         $session = &JFactory::getSession();
         $user = &JFactory::getUser();
-        
+
         $date = new DateTime('now', timezone_open('Europe/Zurich'));
         $inc = $weekday + $session->get('date');
         $date->modify($inc.' days');
@@ -231,7 +235,7 @@ class ModTennisHelper
             '<p>Dans le cas o&ugrave; vous avez un emp&ecirc;chement pour honnorer votre réservation, '.
             "vous &ecirc;tes cordialement invit&eacute; &agrave; l'annuler afin que le court soit ".
             ' libre pour un autre membre.</p>'.
-            
+
             '<div id="SPmsg"></div>'.
 
             '<div style="clear:both;padding:5px;">'.
@@ -244,13 +248,13 @@ class ModTennisHelper
             '<div style="float:left;margin-right:3px;margin-top:5px;">Joueur 2</div>'.
             '<input list="userlist" class="player" id="player2"/>'.
             '</div>'.
-            
+
             '<div style="clear:both;padding:5px;">'.
             '<input type="button" id="reserveBtn" class="btn btn-default" value="Réserver"/>'.
             '<input type="button" id="cancelBtn" class="btn btn-default" value="Annuler" '.
             'style="float: right"/>'.
             '</div>';
-        
+
         return $str;
     }
 
@@ -281,14 +285,14 @@ class ModTennisHelper
         $query->clear();
         return $result->num_rows >= $params->get('max_reserv');
     }
-    
+
     public static function resInsert($user1, $user2, $date, $type)
     {
         $db = &JFactory::getDbo();
         $query = $db->getQuery(true);
 
         $now = new DateTime('now', timezone_open('Europe/Zurich'));
-     
+
         $value = implode(',', array($db->quote($user1), $db->quote($user2),
         $db->quote($date), $db->quote($type), $db->quote($now->format('Y-m-d H:i:s'))));
 
@@ -315,12 +319,12 @@ class ModTennisHelper
             if (ModTennisHelper::checkUserBusy($db, $query, $user2, $params))
                 return ERR_USER2_BUSY;
         }
- 
+
         $values = array(
             $db->quoteName('user1').'='.$db->quote($user1),
             $db->quoteName('user2').'='.$db->quote($user2),
             $db->quoteName('type').'='.$db->quote($type));
- 
+
         $query->update($db->quoteName('#__reservation'))
               ->set($values)
               ->where($db->quoteName('date').'='.$db->quote($date));
@@ -359,7 +363,7 @@ class ModTennisHelper
         } else
             /* delete the given reservation */
             $query->where($db->quoteName('date').'='.$db->quote($date));
-        
+
         try {
             $db->setQuery($query);
             $db->query();
@@ -410,7 +414,7 @@ class ModTennisHelper
 
         if ($cmd == 'getStrings')
             return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
-            
+
         $user = &JFactory::getUser();
         if ($user->guest)
             return ERR_GUEST;
@@ -444,10 +448,10 @@ class ModTennisHelper
                 $d = $date->format('Y-m-d H:i:s');
             }
         }
-        
+
         switch ($cmd) {
         case 'reserve':
-           
+
             $manager = in_array(GRP_MANAGER, $user->get('groups'));
             $resType = $input->get('resType');
             $grp = $user->group_id;
@@ -462,13 +466,13 @@ class ModTennisHelper
             $result = $db->loadRow();
 
             if (is_null($result) && $resType < RES_TYPE_COURS)
-                return ERR_INTERNAL;
-            
+                return ERR_TIMEOUT;
+
             if ($result[2] == RES_TYPE_OPENED) {
 
                 if ($result[0] != $user->id)
                     return ERR_BUSY;
-                
+
                 if ($resType < RES_TYPE_COURS) {
                     /* check both players */
                     $p = strtolower($input->get('player1'));
@@ -501,7 +505,7 @@ class ModTennisHelper
                         return ERR_USER1_DISABLED;
                     if ($user2->block)
                         return ERR_USER2_DISABLED;
-                    
+
                     $v = ModTennisHelper::fillCalCell($user1->name, $user2->name, $resType);
 
                 } else {
@@ -536,7 +540,7 @@ class ModTennisHelper
                 }
 
                 /* send an email if normal reservation replaced by cours ? */
-                
+
                 $ret = ModTennisHelper::resDelete(NULL, $d, $params);
                 if ($ret)
                     return $ret;
@@ -549,7 +553,7 @@ class ModTennisHelper
                     $v = RES_TYPE[$resType];
                 }
             }
-            
+
             return $v; /* cell content */
 
         case 'reserveCancel':
@@ -562,7 +566,7 @@ class ModTennisHelper
 
         case 'calHeader':
             return ModTennisHelper::buildCalHeader();
-            
+
         case 'getUsersName':
             $a = array();
             foreach ($usersName as $id => $d)
