@@ -45,6 +45,12 @@
 	     label="reservation delay"
 	     description="delai en minutes avant de pouvoir reserver a nouveau">
       </field>
+      <field name="timeout"
+	     type="text"
+	     default="5"
+	     label="reservation timeout"
+	     description="temps en minutes pour faire une reservation">
+      </field>
     </fieldset>
   </fields>
 </config>
