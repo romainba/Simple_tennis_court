@@ -123,7 +123,7 @@ class ModTennisHelper
         if ($type < RES_TYPE_COURS)
             $v = $name1 .'<br>'.$name2;
         else if ($type == RES_TYPE_OPENED)
-            $v = $name1 . '<br>en cours';
+            $v = 'Rés. en cours<br>'.$name1;
         else
             $v = RES_TYPE[$type];
         return $v;
