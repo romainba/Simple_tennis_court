@@ -491,14 +491,16 @@ class ModTennisHelper
                     $user1 = &JFactory::getUser($id1);
                     $user2 = &JFactory::getUser($id2);
 
-                    if (is_null($grp)) {
-                        /* user not in a group */
-                        if ($id1 != $user->id && $id2 != $user->id)
-                            return ERR_NOT_ALLOWED;
-                    } else {
-                        /* at least one user must be in the group of the current user */
-                        if ($user1->group_id != $grp && $user2->group_id != $grp)
-                            return ERR_NOT_ALLOWED;
+                    if (!$manager) {
+                        if (is_null($grp)) {
+                            /* user not in a group */
+                            if ($id1 != $user->id && $id2 != $user->id)
+                                return ERR_NOT_ALLOWED;
+                        } else {
+                            /* at least one user must be in the group of the current user */
+                            if ($user1->group_id != $grp && $user2->group_id != $grp)
+                                return ERR_NOT_ALLOWED;
+                        }
                     }
 
                     if ($user1->block)
