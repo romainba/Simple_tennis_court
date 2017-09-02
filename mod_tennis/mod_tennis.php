@@ -4,6 +4,8 @@ defined('_JEXEC') or die;
 
 // Include the syndicate functions only once
 require_once dirname(__FILE__) . '/helper.php';
+# require_once JPATH_LIBRARIES . '/phpexcel/library/PHPExcel.php';
+require_once dirname(__FILE__) . '/Classes/PHPExcel.php';
 
 $document = JFactory::getDocument();
 
