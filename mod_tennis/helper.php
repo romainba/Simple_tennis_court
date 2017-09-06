@@ -172,9 +172,9 @@ class ModTennisHelper
 
         if (in_array(GRP_MANAGER, $user->get('groups'))) {
             $str .= '<hr><p>Exporter les reservations faites du '.
-                '<input type="date" name="debut" id="exportBegin" style="width:80px"/>'.
-                ' au <input type="date" name="fin" id="exportEnd" style="width:80px"/>.</p>'.
-                 '<input type="submit" value="exporter" class="button" id="exportDb" />';
+                '<input type="text" name="debut" class="dp" id="exportBegin" style="width:80px"/>'.
+                ' au <input type="text" name="fin" class="dp" id="exportEnd" style="width:80px"/>.</p>'.
+                 '<input type="submit" class="exportBtn" value="exporter" id="exportDb"/>';
         }
 
         return $str;
@@ -549,7 +549,7 @@ class ModTennisHelper
 
         case 'exportDb':
             require_once dirname(__FILE__) . '/export.php';
-            return ModTennisExporter::exportDb();
+            return ModTennisExporter::exportDb($input->get('begin'), $input->get('end'));
 
         default:
             return ERR_INTERNAL;
