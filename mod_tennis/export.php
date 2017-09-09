@@ -1,11 +1,62 @@
 <?php
 
+function co($c, $i)
+{
+    return chr(ord($c) + $i);
+}
+
 class ModTennisExporter {
+
+    public static function newBarChart($title, $col, $row, $numCol, $numRow)
+    {
+        $sl = array();
+        for ($c = 1; $c < $numCol; $c++)
+            array_push($sl, new PHPExcel_Chart_DataSeriesValues('String',
+            'reservation!'.co($col, $c).$row, NULL, 1));
+        
+        $sx = array(
+            new PHPExcel_Chart_DataSeriesValues('String',
+            'reservation!'.$col.($row+1).':'.$col.($row+$numRow-1),
+            NULL, $numRow-1));
+        
+        $sy = array();
+        for ($c = 1; $c < $numCol; $c++)
+            array_push($sy, new PHPExcel_Chart_DataSeriesValues('String',
+            'reservation!'.co($col, $c).($row+1).':'.co($col, $c).($row+$numRow-1),
+            NULL, $numRow-1));
+
+        $ds = new PHPExcel_Chart_DataSeries(
+            PHPExcel_Chart_DataSeries::TYPE_BARCHART,
+            PHPExcel_Chart_DataSeries::GROUPING_CLUSTERED,
+            range(0, count($sy)-1),
+            $sl, $sx, $sy
+        );
+        
+        $pa = new PHPExcel_Chart_PlotArea(NULL, array($ds));
+        if ($numCol > 1)
+            $legend = new PHPExcel_Chart_Legend(PHPExcel_Chart_Legend::POSITION_RIGHT, NULL, false);
+        $title = new PHPExcel_Chart_Title($title);
+        $xal = new PHPExcel_Chart_Title('#reservations');
+        $yal = new PHPExcel_Chart_Title('#groupes');
+        
+        return new PHPExcel_Chart(
+            'histo_group',
+            $title,
+            $legend,
+            $pa,
+            true,			// plotVisibleOnly
+            0,			// displayBlanksAs
+            $xal, $yal
+        );
+    }
+
     
     public static function exportDb($begin, $end)
     {
           require_once dirname(__FILE__) . '/Classes/PHPExcel.php';
           require_once dirname(__FILE__) . '/const.php';
+
+          $charHeight = 20;
           
           $o = new PHPExcel();
           $o->getProperties()->setCreator("TCLV")
@@ -66,7 +117,7 @@ class ModTennisExporter {
           $o->addSheet($wu, 0);
 
           foreach($header as $h => $v) {
-              $c = chr(ord('A') + $h);
+              $c = co('A', $h);
               $wu->getColumnDimension($c)->setWidth($v[2]);
           }
 
@@ -128,7 +179,7 @@ class ModTennisExporter {
           $o->addSheet($w, 1);
           
           foreach($header as $h => $v) {
-              $c = chr(ord('A') + $h);
+              $c = co('A', $h);
               $w->getColumnDimension($c)->setWidth($v[1]);
           }
 
@@ -154,15 +205,15 @@ class ModTennisExporter {
           
           $t = array();
           array_push($t, array('Mois', 'Normal', 'Cours', 'Manifestation'));
-          $i = $dataCell + 6;
+          $i = $dataCell + 5;
           $n++;
           for ($m = $b[0]*12 + $b[1]; $m <= $e[0]*12 + $e[1]; $m++) {
               $d = date("Y-m-d", mktime(0, 0, 0, $m % 12, 1, $m/12));
+              $i++;
               $v1 = '=COUNTIFS(cx,">="&A'.$i.',cx,"<="&EOMONTH(A'.$i.', 0),dx,"=normal")';
               $v2 = '=COUNTIFS(cx,">="&A'.$i.',cx,"<="&EOMONTH(A'.$i.', 0),dx,"=cours de tennis")';
               $v3 = '=COUNTIFS(cx,">="&A'.$i.',cx,"<="&EOMONTH(A'.$i.', 0),dx,"=manifestation")';
               array_push($t, array($d, $v1, $v2, $v3));
-              $i++;
           }
           
           $w->fromArray(array_column($header, 0), NULL, 'A1')
@@ -173,7 +224,7 @@ class ModTennisExporter {
           $w->getStyle('A1:D1')->applyFromArray($s1);
           $w->getStyle('A1:D'.$n)->applyFromArray($s2);
           $w->getStyle('A'.($dataCell+5).':D'.($dataCell+5))->applyFromArray($s1);
-          $w->getStyle('A'.($dataCell+5).':D'.($i-1))->applyFromArray($s2);
+          $w->getStyle('A'.($dataCell+5).':D'.$i)->applyFromArray($s2);
           
           $o->addNamedRange(new PHPExcel_NamedRange('begin', $w, 'B'.($dataCell + 1)));
           $o->addNamedRange(new PHPExcel_NamedRange('end', $w, 'D'.($dataCell + 1)));
@@ -183,6 +234,14 @@ class ModTennisExporter {
           $o->addNamedRange(new PHPExcel_NamedRange('dx', $w, 'D2:D'.$n) );
           $o->addNamedRange(new PHPExcel_NamedRange('ex', $w, 'E2:E'.$n) );
           $o->addNamedRange(new PHPExcel_NamedRange('fx', $w, 'F2:F'.$n) );
+
+          $chart = ModTennisExporter::newBarChart(
+              $data[4][0], 'A', $dataCell+5, 4, $i - $dataCell - 4);
+          $cp = $dataCell + 5;
+          $chart->setTopLeftPosition('F'.$cp)
+                ->setBottomRightPosition('N'.($cp + $charHeight));
+          $w->addChart($chart);
+          $cp += $charHeight + 2;
 
           /* # reservation per users */
           $t = array();
@@ -200,7 +259,7 @@ class ModTennisExporter {
           $wu->getStyle('A1:O'.$u)->applyFromArray($s2);
           $wu->getStyle('A'.$gh.':B'.$gh)->applyFromArray($s1);
           $wu->getStyle('A'.$gh.':B'.$g)->applyFromArray($s2);
-          
+
           /* activity histogram par joueurs */
           $histo = array(0, 1, 5, 10, 20, 50);
           $t = array();
@@ -221,6 +280,12 @@ class ModTennisExporter {
           $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
           $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
 
+          $chart = ModTennisExporter::newBarChart($t[0][0], 'A', $i, 2, sizeof($histo) + 1);
+          $chart->setTopLeftPosition('F'.$cp)
+                ->setBottomRightPosition('N'.($cp + $charHeight));
+          $w->addChart($chart);
+          $cp += $charHeight + 2;
+
           /* activity histogram per groups */
           $histo = array(0, 1, 5, 10, 20, 50);
           $t = array();
@@ -236,12 +301,16 @@ class ModTennisExporter {
                   $v = '=COUNTIFS(res_group,">"&A'.($n-1).',res_group,"<="&A'.$n.')';
               array_push($t, array($h, $v));
           }
-          $n += $k;
           $w->fromArray($t, NULL, 'A'.$i);
           $i++;
           $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
           $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
-          
+
+          $chart = ModTennisExporter::newBarChart($t[0][0], 'A', $i, 2, sizeof($histo) + 1);
+          $chart->setTopLeftPosition('F'.$cp)
+                ->setBottomRightPosition('N'.($cp + $charHeight));
+          $w->addChart($chart);
+
           $objWriter = new PHPExcel_Writer_Excel2007($o);
           ob_start();
           $objWriter->setIncludeCharts(TRUE);
