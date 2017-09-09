@@ -7,8 +7,8 @@ class ModTennisExporter {
           require_once dirname(__FILE__) . '/Classes/PHPExcel.php';
           require_once dirname(__FILE__) . '/const.php';
           
-          $objPHPExcel = new PHPExcel();
-          $objPHPExcel->getProperties()->setCreator("TCLV")
+          $o = new PHPExcel();
+          $o->getProperties()->setCreator("TCLV")
                       ->setLastModifiedBy("")
                       ->setTitle("TCLV users")
                       ->setSubject("")
@@ -62,12 +62,12 @@ class ModTennisExporter {
           $db->setQuery($query);
           $users = $db->loadAssocList();
 
-          $workSheet = new PHPExcel_Worksheet($objPHPExcel, 'users');
-          $objPHPExcel->addSheet($workSheet, 0);
+          $wu = new PHPExcel_Worksheet($o, 'users');
+          $o->addSheet($wu, 0);
 
           foreach($header as $h => $v) {
               $c = chr(ord('A') + $h);
-              $objPHPExcel->setActiveSheetIndex(0)->getColumnDimension($c)->setWidth($v[2]);
+              $wu->getColumnDimension($c)->setWidth($v[2]);
           }
 
           /* get group table */
@@ -90,22 +90,15 @@ class ModTennisExporter {
           }
           $g--;
 
-          $objPHPExcel->setActiveSheetIndex(0)
-                      ->fromArray(array_column($header, 0), NULL, 'A1')
-                      ->fromArray($users, NULL, 'A2')
-                      ->fromArray($h, NULL, 'A'.$gh)
-                      ->fromArray($groups, NULL, 'A'.($gh + 1));
+          $wu->fromArray(array_column($header, 0), NULL, 'A1')
+             ->fromArray($users, NULL, 'A2')
+             ->fromArray($h, NULL, 'A'.$gh)
+             ->fromArray($groups, NULL, 'A'.($gh + 1));
           
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('user_id',
-          	$objPHPExcel->getActiveSheet(), 'A2:A'.$u));
-
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('user_table',
-            $objPHPExcel->getActiveSheet(), 'A2:O'.$u));
-
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('groups',
-            $objPHPExcel->getActiveSheet(), 'A'.($gh+1).':A'.$g));
-         $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('res_group',
-            $objPHPExcel->getActiveSheet(), 'B'.($gh+1).':B'.$g));
+          $o->addNamedRange(new PHPExcel_NamedRange('user_id', $wu, 'A2:A'.$u));
+          $o->addNamedRange(new PHPExcel_NamedRange('user_table', $wu, 'A2:O'.$u));
+          $o->addNamedRange(new PHPExcel_NamedRange('groups', $wu, 'A'.($gh+1).':A'.$g));
+          $o->addNamedRange(new PHPExcel_NamedRange('res_group', $wu, 'B'.($gh+1).':B'.$g));
          
           /* get reservation table */
           $header = array(
@@ -131,12 +124,12 @@ class ModTennisExporter {
           $db->setQuery($query);
           $res = $db->loadAssocList();
 
-          $workSheet = new PHPExcel_Worksheet($objPHPExcel, 'reservation');
-          $objPHPExcel->addSheet($workSheet, 1);
+          $w = new PHPExcel_Worksheet($o, 'reservation');
+          $o->addSheet($w, 1);
           
           foreach($header as $h => $v) {
               $c = chr(ord('A') + $h);
-              $objPHPExcel->setActiveSheetIndex(1)->getColumnDimension($c)->setWidth($v[1]);
+              $w->getColumnDimension($c)->setWidth($v[1]);
           }
 
           $n = sizeof($res);
@@ -172,37 +165,24 @@ class ModTennisExporter {
               $i++;
           }
           
-          $objPHPExcel->setActiveSheetIndex(1)
-                      ->fromArray(array_column($header, 0), NULL, 'A1')
-                      ->fromArray($res, NULL, 'A2')
-                      ->fromArray($data, NULL, 'A' . $dataCell)
-                      ->fromArray($t, NULL, 'A' . ($dataCell + 5));
+          $w->fromArray(array_column($header, 0), NULL, 'A1')
+            ->fromArray($res, NULL, 'A2')
+            ->fromArray($data, NULL, 'A' . $dataCell)
+            ->fromArray($t, NULL, 'A' . ($dataCell + 5));
 
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A1:D1')->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A1:D'.$n)->applyFromArray($s2);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.($dataCell+5).':D'.($dataCell+5))->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.($dataCell+5).':D'.($i-1))->applyFromArray($s2);
+          $w->getStyle('A1:D1')->applyFromArray($s1);
+          $w->getStyle('A1:D'.$n)->applyFromArray($s2);
+          $w->getStyle('A'.($dataCell+5).':D'.($dataCell+5))->applyFromArray($s1);
+          $w->getStyle('A'.($dataCell+5).':D'.($i-1))->applyFromArray($s2);
           
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('begin',
-          	$objPHPExcel->getActiveSheet(), 'B'.($dataCell + 1)));
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('end',
-          	$objPHPExcel->getActiveSheet(), 'D'.($dataCell + 1)));
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('ax',
-          	$objPHPExcel->getActiveSheet(), 'A2:A'.$n) );
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('bx',
-          	$objPHPExcel->getActiveSheet(), 'B2:B'.$n) );
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('cx',
-          	$objPHPExcel->getActiveSheet(), 'C2:C'.$n) );
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('dx',
-          	$objPHPExcel->getActiveSheet(), 'D2:D'.$n) );
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('ex',
-          	$objPHPExcel->getActiveSheet(), 'E2:E'.$n) );
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('fx',
-          	$objPHPExcel->getActiveSheet(), 'F2:F'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('begin', $w, 'B'.($dataCell + 1)));
+          $o->addNamedRange(new PHPExcel_NamedRange('end', $w, 'D'.($dataCell + 1)));
+          $o->addNamedRange(new PHPExcel_NamedRange('ax', $w, 'A2:A'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('bx', $w, 'B2:B'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('cx', $w, 'C2:C'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('dx', $w, 'D2:D'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('ex', $w, 'E2:E'.$n) );
+          $o->addNamedRange(new PHPExcel_NamedRange('fx', $w, 'F2:F'.$n) );
 
           /* # reservation per users */
           $t = array();
@@ -212,22 +192,14 @@ class ModTennisExporter {
               array_push($t, array($v));
           }
 
-          $objPHPExcel->setActiveSheetIndex(0)
-                      ->fromArray($t, NULL, 'O1');
-
-          $objPHPExcel->addNamedRange( new PHPExcel_NamedRange('ox',
-          	$objPHPExcel->getActiveSheet(), 'O2:O'.$u));
+          $wu->fromArray($t, NULL, 'O1');
+          $o->addNamedRange(new PHPExcel_NamedRange('ox', $wu, 'O2:O'.$u));
       
-          $objPHPExcel->getActiveSheet()
-                      ->setAutoFilter('A1:O'.$u)
-                      ->getStyle('A1:O1')->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A1:O'.$u)->applyFromArray($s2);
-
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$gh.':B'.$gh)->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$gh.':B'.$g)->applyFromArray($s2);
+          $wu->setAutoFilter('A1:O'.$u)
+             ->getStyle('A1:O1')->applyFromArray($s1);
+          $wu->getStyle('A1:O'.$u)->applyFromArray($s2);
+          $wu->getStyle('A'.$gh.':B'.$gh)->applyFromArray($s1);
+          $wu->getStyle('A'.$gh.':B'.$g)->applyFromArray($s2);
           
           /* activity histogram par joueurs */
           $histo = array(0, 1, 5, 10, 20, 50);
@@ -235,43 +207,44 @@ class ModTennisExporter {
           array_push($t, array('Histogramme du nombre de joueur par nombre de reservation:'));
           array_push($t, array('# reserverations', '# joueurs'));
           $i = $i + 2;
-          $n = $i + 2;
-          foreach ($histo as $h) {
-              $v = '=COUNTIFS(ox,"="&A'.$n.')';
-              array_push($t, array($h, $v));
+          $n = $i + 1;
+          foreach ($histo as $h) { 
               $n++;
+              if ($n == $i + 2)
+                  $v = '=COUNTIFS(ox,"="&A'.$n.')';
+              else
+                  $v = '=COUNTIFS(ox,">"&A'.($n-1).',ox,"<="&A'.$n.')';
+              array_push($t, array($h, $v));
           }
-          $objPHPExcel->setActiveSheetIndex(1)
-                      ->fromArray($t, NULL, 'A'.$i);
-
+          $w->fromArray($t, NULL, 'A'.$i);
           $i++;
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$i.':B'.($n-1))->applyFromArray($s2);
+          $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
+          $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
 
           /* activity histogram per groups */
           $histo = array(0, 1, 5, 10, 20, 50);
           $t = array();
           array_push($t, array('Histogramme du nombre de groupes par nombre de reservation:'));
           array_push($t, array('# reserverations', '# groupes'));
-          $i = $n + 2;
-          $n = $i + 2;
+          $i = $n + 3;
+          $n = $i + 1;
           foreach ($histo as $h) {
-              $v = '=COUNTIFS(res_group,"="&A'.$n.')';
-              array_push($t, array($h, $v));
               $n++;
+              if ($n == $i + 2) 
+                  $v = '=COUNTIFS(res_group,"="&A'.$n.')';
+              else
+                  $v = '=COUNTIFS(res_group,">"&A'.($n-1).',res_group,"<="&A'.$n.')';
+              array_push($t, array($h, $v));
           }
-          $objPHPExcel->setActiveSheetIndex(1)
-                      ->fromArray($t, NULL, 'A'.$i);
+          $n += $k;
+          $w->fromArray($t, NULL, 'A'.$i);
           $i++;
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
-          $objPHPExcel->getActiveSheet()
-                      ->getStyle('A'.$i.':B'.($n-1))->applyFromArray($s2);
+          $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
+          $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
           
-          $objWriter = new PHPExcel_Writer_Excel2007($objPHPExcel);
+          $objWriter = new PHPExcel_Writer_Excel2007($o);
           ob_start();
+          $objWriter->setIncludeCharts(TRUE);
           $objWriter->save("php://output");
           $xlsData = ob_get_contents();
           ob_end_clean();
