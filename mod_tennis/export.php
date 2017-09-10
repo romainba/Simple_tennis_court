@@ -7,7 +7,7 @@ function co($c, $i)
 
 class ModTennisExporter {
 
-    public static function newBarChart($title, $col, $row, $numCol, $numRow)
+    public static function newBarChart($title, $grouping, $col, $row, $numCol, $numRow)
     {
         $sl = array();
         for ($c = 1; $c < $numCol; $c++)
@@ -27,7 +27,7 @@ class ModTennisExporter {
 
         $ds = new PHPExcel_Chart_DataSeries(
             PHPExcel_Chart_DataSeries::TYPE_BARCHART,
-            PHPExcel_Chart_DataSeries::GROUPING_CLUSTERED,
+            $grouping,
             range(0, count($sy)-1),
             $sl, $sx, $sy
         );
@@ -236,7 +236,8 @@ class ModTennisExporter {
           $o->addNamedRange(new PHPExcel_NamedRange('fx', $w, 'F2:F'.$n) );
 
           $chart = ModTennisExporter::newBarChart(
-              $data[4][0], 'A', $dataCell+5, 4, $i - $dataCell - 4);
+              $data[4][0], PHPExcel_Chart_DataSeries::GROUPING_STACKED,
+              'A', $dataCell+5, 4, $i - $dataCell - 4);
           $cp = $dataCell + 5;
           $chart->setTopLeftPosition('F'.$cp)
                 ->setBottomRightPosition('N'.($cp + $charHeight));
@@ -280,7 +281,9 @@ class ModTennisExporter {
           $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
           $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
 
-          $chart = ModTennisExporter::newBarChart($t[0][0], 'A', $i, 2, sizeof($histo) + 1);
+          $chart = ModTennisExporter::newBarChart(
+              $t[0][0], PHPExcel_Chart_DataSeries::GROUPING_CLUSTERED,
+              'A', $i, 2, sizeof($histo) + 1);
           $chart->setTopLeftPosition('F'.$cp)
                 ->setBottomRightPosition('N'.($cp + $charHeight));
           $w->addChart($chart);
@@ -306,7 +309,9 @@ class ModTennisExporter {
           $w->getStyle('A'.$i.':B'.$i)->applyFromArray($s1);
           $w->getStyle('A'.$i.':B'.$n)->applyFromArray($s2);
 
-          $chart = ModTennisExporter::newBarChart($t[0][0], 'A', $i, 2, sizeof($histo) + 1);
+          $chart = ModTennisExporter::newBarChart(
+              $t[0][0], PHPExcel_Chart_DataSeries::GROUPING_CLUSTERED,
+              'A', $i, 2, sizeof($histo) + 1);
           $chart->setTopLeftPosition('F'.$cp)
                 ->setBottomRightPosition('N'.($cp + $charHeight));
           $w->addChart($chart);
