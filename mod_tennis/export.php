@@ -34,7 +34,8 @@ class ModTennisExporter {
         
         $pa = new PHPExcel_Chart_PlotArea(NULL, array($ds));
         if ($numCol > 1)
-            $legend = new PHPExcel_Chart_Legend(PHPExcel_Chart_Legend::POSITION_RIGHT, NULL, false);
+            $legend = new PHPExcel_Chart_Legend(
+                PHPExcel_Chart_Legend::POSITION_RIGHT, NULL, false);
         $title = new PHPExcel_Chart_Title($title);
         $xal = new PHPExcel_Chart_Title('#reservations');
         $yal = new PHPExcel_Chart_Title('#groupes');
@@ -317,6 +318,7 @@ class ModTennisExporter {
           $w->addChart($chart);
 
           $objWriter = new PHPExcel_Writer_Excel2007($o);
+          //$objWriter = new PHPExcel_Writer_HTML($o);
           ob_start();
           $objWriter->setIncludeCharts(TRUE);
           $objWriter->save("php://output");

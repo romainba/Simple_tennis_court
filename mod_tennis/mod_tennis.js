@@ -444,7 +444,3 @@ jQuery(document).ready(function() {
     });
 })
 
-/* to add:
- * - automatic refresh
- * - user management with group_id and abonnement
- */

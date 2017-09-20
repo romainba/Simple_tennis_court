@@ -175,6 +175,9 @@ class ModTennisHelper
                 '<input type="text" name="debut" class="dp" id="exportBegin" style="width:80px"/>'.
                 ' au <input type="text" name="fin" class="dp" id="exportEnd" style="width:80px"/>.</p>'.
                  '<input type="submit" class="exportBtn" value="exporter" id="exportDb"/>';
+
+            $str .= '<hr><div id="chart1"></div>';
+            $str .= '<hr><div id="chart2"></div>';
         }
 
         return $str;
@@ -551,6 +554,11 @@ class ModTennisHelper
             require_once dirname(__FILE__) . '/export.php';
             return ModTennisExporter::exportDb($input->get('begin'), $input->get('end'));
 
+        case 'chart':
+            require_once dirname(__FILE__) . '/chart.php';
+            return ModTennisExporter::chart($input->get('type'),
+            	$input->get('begin'), $input->get('end'));
+            
         default:
             return ERR_INTERNAL;
         }
