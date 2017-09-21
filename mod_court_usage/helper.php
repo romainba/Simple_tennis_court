@@ -1,9 +1,16 @@
 <?php
 
-require_once dirname(__FILE__) . '/const.php';
+const ERR_INVAL = 1;
+const ERR_INTERNAL = 2;
+const ERR_BD = 3;
 
-class ModTennisExporter {
+const ERR_NAMES = array("",
+"La requête est invalide",
+"Une erreur interne s'est produite",
+"Erreur avec database");
 
+class ModCourtUsageHelper
+{
     public static function chart($type, $begin, $end)
     {
         $db = &JFactory::getDbo();
@@ -95,5 +102,28 @@ class ModTennisExporter {
         }
         return $data;
     }
+
+    public static function getAjax()
+    {
+ 		$input  = &JFactory::getApplication()->input;
+        $cmd = $input->get('cmd');
+
+        if (is_null($cmd))
+            return ERR_INVAL;
+
+        switch ($cmd) {
+        case 'chart':
+            return ModCourtUsageHelper::chart($input->get('type'),
+            	$input->get('begin'), $input->get('end'));
+
+        case 'exportDb':
+            require_once dirname(__FILE__) . '/export.php';
+            return ModTennisExporter::exportDb($input->get('begin'), $input->get('end'));
+
+        default:
+            return ERR_INVAL;
+        }
+    }
 }
+
 ?>

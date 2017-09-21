@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.1.0" client="site" method="upgrade">
+<name>Tennis</name>
+<author>Romain</author>
+<version>1.0.0</version>
+<description>Tennis court usage</description>
+
+<files>
+  <filename module="mod_court_tennis">mod_court_usage.php</filename>
+  <filename>index.html</filename>
+  <filename>mod_court_usage.js</filename>
+  <filename>helper.php</filename>
+  <filename>stylesheet.css</filename>
+  <folder>tmpl</folder>
+  <filename>tmpl/default.php</filename>
+  <filename>tmpl/index.html</filename>
+</files>
+
+<config>
+  <fields name="params">
+  </fields>
+</config>
+
+</extension>

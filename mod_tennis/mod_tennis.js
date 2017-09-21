@@ -270,39 +270,6 @@ function reserveDay(date, hour)
     }
 }
 
-function exportEvent(cmd, begin, end)
-{
-    var req = {
-	'option' : 'com_ajax',
-	'module' : 'tennis',
-	'cmd'    : cmd,
-	'format' : AJAX_FMT,
-	'width'  : null,
-	'begin'  : begin,
-	'end'    : end
-    };
-
-    jQuery.ajax({
-	type   : 'POST',
-	data : req,
-
-	success: function (response) {
-	    var $a = jQuery("<a>");
-	    $a.attr("href",response.data.file);
-	    $a.attr("download","tclv.xls");
-	    jQuery("body").append($a);
-	    $a[0].click();
-	    $a.remove();
-	},
-
-	error: function(response) {
-	    debug && console.log("ajax buttonEvent failed");
-	    debug && console.log(response);
-    	    alert(ERR_NAMES[ERR_INTERNAL]);
-	}
-    })
-}
-
 function showCalendar(cmd, width)
 {
     var req = {
@@ -325,12 +292,6 @@ function showCalendar(cmd, width)
 	    else
 		e.innerHTML = response.data;
 	    e.style.display = '';
-
-	    jQuery(".exportBtn").click(function(event) {
-		a = document.getElementById("exportBegin");
-		b = document.getElementById("exportEnd");
-		exportEvent(event.target.id, a.value, b.value);
-	    })
 	},
 
 	error: function(response) {
