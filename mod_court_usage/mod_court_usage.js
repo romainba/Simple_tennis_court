@@ -1,4 +1,11 @@
 
+const ERR_INVAL = 1;
+const ERR_INTERNAL = 2;
+
+const AJAX_FMT = "JSON";
+
+const debug = true;
+
 google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
@@ -46,7 +53,7 @@ function draw_chart(elem, type, title, begin, end, isStacked) {
 	error: function(response) {
 	    debug && console.log("ajax failed:");
 	    debug && console.log(response);
-	    alert(ERR_NAMES[ERR_INTERNAL]);
+	    alert("internal error");
 	}
     })
 }
@@ -85,7 +92,7 @@ function exportEvent(cmd, begin, end)
 	error: function(response) {
 	    debug && console.log("ajax buttonEvent failed");
 	    debug && console.log(response);
-    	    alert(ERR_NAMES[ERR_INTERNAL]);
+    	    alert("internal error");
 	}
     })
 }
