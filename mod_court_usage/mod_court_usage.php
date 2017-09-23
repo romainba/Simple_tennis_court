@@ -4,7 +4,6 @@ defined('_JEXEC') or die;
 
 // Include the syndicate functions only once
 require_once dirname(__FILE__) . '/helper.php';
-require_once dirname(__FILE__) . '/../mod_tennis/const.php';
 
 require_once JPATH_LIBRARIES . '/phpexcel/library/PHPExcel.php';
 

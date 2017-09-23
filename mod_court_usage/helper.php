@@ -4,6 +4,9 @@ const ERR_INVAL = 1;
 const ERR_INTERNAL = 2;
 const ERR_BD = 3;
 
+require_once dirname(__FILE__) . '/../mod_tennis/const.php';
+require_once dirname(__FILE__) . '/export.php';
+
 const ERR_NAMES = array("",
 "La requête est invalide",
 "Une erreur interne s'est produite",
@@ -75,24 +78,32 @@ class ModCourtUsageHelper
                 $users[$p]++;
             }
 
-            $widths = range(0, 30, 5);
+            $w = range(5, 30, 5);
             $bins = array();
-            for($i=0, $j=count($widths)-1; $i<$j;++$i)
-                $bins[] = array('min' => $width[$i], 'max' => $widths[$i+1]);
+            $bins[] = array('min' => 0, 'max' => 0);
+            $bins[] = array('min' => 1, 'max' => 1);
+            $bins[] = array('min' => 2, 'max' => 5);
+            for($i=0; $i < count($w)-1; $i++)
+                $bins[] = array('min' => $w[$i], 'max' => $w[$i+1]);
 
             $hist = array();
             foreach($bins as $bin) {
-                $hist[$bin['min']."-".$bin['max']] = array_filter($users,
-                function($e) use ($bin) {
-                    return ( ($e > $bin['min']) && ($e <= $bin['max']) );
+                $a = $bin['min'];
+                $b = $bin['max'];
+                $hist[$a ."-" .$b] = array_filter($users,
+                function($e) use ($a, $b) {
+                    $v = intval($e);
+                    return ( ($v >= $a) && ($v <= $b) );
                 });
             }
-
+            
             $data = array();
             $data[] = array('#res', '#joueur');
             foreach($bins as $bin) {
-                $c = $bin['min']."-".$bin['max'];
-                $data[] = array($c, count($hist[$c]));
+                $a = $bin['min'];
+                $b = $bin['max'];
+                $l = $a == $b ? $a : $a ."-" .$b;
+                $data[] = array(strval($l), count($hist[$a . "-" . $b]));
             }
             break;
             
@@ -117,7 +128,6 @@ class ModCourtUsageHelper
             	$input->get('begin'), $input->get('end'));
 
         case 'exportDb':
-            require_once dirname(__FILE__) . '/export.php';
             return ModTennisExporter::exportDb($input->get('begin'), $input->get('end'));
 
         default:

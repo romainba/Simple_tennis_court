@@ -15,16 +15,18 @@ function draw_charts() {
 	       "Utilisation du court pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
-	       true);
+	       true,
+	       '# reservations');
     draw_chart('chart2',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
-	       false);
+	       false,
+	      '# reservations');
 }
 
-function draw_chart(elem, type, title, begin, end, isStacked) {
+function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
     var req = {
 	'option' : 'com_ajax',
 	'module' : 'court_usage',
@@ -45,6 +47,7 @@ function draw_chart(elem, type, title, begin, end, isStacked) {
 		'width':800,
 		'height':300,
 		'isStacked': isStacked,
+		'hAxis': { 'title': hTitle },
 	    };
 	    var data = new google.visualization.arrayToDataTable(response.data);
 	    var chart = new google.visualization.ColumnChart(document.getElementById(elem));
@@ -58,20 +61,22 @@ function draw_chart(elem, type, title, begin, end, isStacked) {
     })
 }
 
-jQuery(".exportBtn").click(function(event) {
-    a = document.getElementById("exportBegin");
-    b = document.getElementById("exportEnd");
-    exportEvent(event.target.id, a.value, b.value);
-})
+jQuery(document).ready(function() {
 
+    jQuery(".exportBtn").click(function(event) {
+	a = document.getElementById("exportBegin");
+	b = document.getElementById("exportEnd");
+	exportEvent(event.target.id, a.value, b.value);
+    });
+})
+		       
 function exportEvent(cmd, begin, end)
 {
     var req = {
 	'option' : 'com_ajax',
-	'module' : 'tennis',
+	'module' : 'court_usage',
 	'cmd'    : cmd,
 	'format' : AJAX_FMT,
-	'width'  : null,
 	'begin'  : begin,
 	'end'    : end
     };

@@ -55,7 +55,7 @@ class ModTennisExporter {
     public static function exportDb($begin, $end)
     {
           require_once dirname(__FILE__) . '/Classes/PHPExcel.php';
-          require_once dirname(__FILE__) . '/const.php';
+          require_once dirname(__FILE__) . '/../mod_tennis/const.php';
 
           $charHeight = 20;
           
