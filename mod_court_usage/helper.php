@@ -4,7 +4,7 @@ const ERR_INVAL = 1;
 const ERR_INTERNAL = 2;
 const ERR_BD = 3;
 
-require_once dirname(__FILE__) . '/../mod_tennis/const.php';
+require_once JPATH_SITE . '/modules/mod_tennis/const.php';
 require_once dirname(__FILE__) . '/export.php';
 
 const ERR_NAMES = array("",
@@ -128,7 +128,7 @@ class ModCourtUsageHelper
             	$input->get('begin'), $input->get('end'));
 
         case 'exportDb':
-            return ModTennisExporter::exportDb($input->get('begin'), $input->get('end'));
+            return ModTennisExport::exportDb($input->get('begin'), $input->get('end'));
 
         default:
             return ERR_INVAL;
