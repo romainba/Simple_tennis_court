@@ -8,11 +8,14 @@ function toascii( $str )
 }
 
 {
+    if (sizeof($argv) != 5)
+        die('usage: ' . $argv[0] . ' <user> <password> <database> <prefix>\n');
+
     $sql_hostname = 'localhost';
-    $sql_user = 'admin';
-    $sql_password = '';
-    $mambo_database_name = 'test'; //'joomla';
-    $table_prefix = 'c8iu9';
+    $sql_user = $argv[1];
+    $sql_password = $argv[2];
+    $mambo_database_name = $argv[3];
+    $table_prefix = $argv[4];
 
     $passwd = '$2y$10$U9c5WD14h.IsMHYj1LCseeVlH4Cdzv7eHBkEW2bOps6y.dZ9W8Zwm'; // tclv
 
