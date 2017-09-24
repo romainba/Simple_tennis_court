@@ -1,15 +1,15 @@
 <?php
 
 {
-    if (sizeof($argv) != 5)
-        die('usage: ' . $argv[0] . ' <user> <password> <database> <prefix>\n');
+    if (sizeof($argv) != 6)
+        die('usage: ' . $argv[0] . " <hostname> <user> <password> <database> <prefix>\n");
 
-    $sql_hostname = 'localhost';
-    $sql_user = $argv[1];
-    $sql_password = $argv[2];
-    $mambo_database_name = $argv[3];
-    $table_prefix = $argv[4];
-    
+    $sql_hostname = $argv[1];
+    $sql_user = $argv[2];
+    $sql_password = $argv[3];
+    $mambo_database_name = $argv[4];
+    $table_prefix = $argv[5];
+        
     $mambodb = mysql_connect($sql_hostname, $sql_user, $sql_password) or
     die ('Connection not possible : ' . mysql_error(). "\n");
     echo"Connected to the database\n" ;
