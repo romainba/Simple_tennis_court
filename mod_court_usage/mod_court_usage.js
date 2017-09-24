@@ -50,6 +50,7 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
 		'height': 300,
 		'isStacked': isStacked,
 		'hAxis': { 'title': hTitle },
+		'backgroundColor': { 'fill': 'transparent' },
 	    };
 	    var data = new google.visualization.arrayToDataTable(response.data);
 	    var chart = new google.visualization.ColumnChart(document.getElementById(elem));
