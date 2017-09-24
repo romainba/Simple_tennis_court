@@ -6,6 +6,8 @@ const AJAX_FMT = "JSON";
 
 const debug = true;
 
+var width;
+
 google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
@@ -44,8 +46,8 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
 	success: function(response) {
 	    var options = {
 		'title': title,
-		'width':800,
-		'height':300,
+		'width': width,
+		'height': 300,
 		'isStacked': isStacked,
 		'hAxis': { 'title': hTitle },
 	    };
@@ -64,9 +66,18 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
 jQuery(document).ready(function() {
 
     jQuery(".exportBtn").click(function(event) {
-	a = document.getElementById("exportBegin");
-	b = document.getElementById("exportEnd");
+	var a = document.getElementById("exportBegin");
+	var b = document.getElementById("exportEnd");
 	exportEvent(event.target.id, a.value, b.value);
+    });
+
+    width = jQuery("#chart1").css("width");
+    jQuery(window).on('resize', function() {
+	var w = jQuery("#chart1").css("width");
+	if (w != width) {
+    	    width = w;
+	    draw_charts();
+	}
     });
 })
 		       
