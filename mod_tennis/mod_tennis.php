@@ -16,8 +16,6 @@ $user = JFactory::getUser();
 $session->set('userId', $user->id);
 
 JHtml::script(Juri::base() . 'modules/mod_tennis/jquery.clearsearch.js');
-//JHtml::script('https://www.gstatic.com/charts/loader.js');
-//JHtml::script(Juri::base() . 'modules/mod_tennis/chart.js');
 JHtml::script(Juri::base() . 'modules/mod_tennis/mod_tennis.js');
 JHtml::stylesheet('modules/mod_tennis/stylesheet.css');
 
