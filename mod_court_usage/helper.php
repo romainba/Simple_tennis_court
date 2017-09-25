@@ -114,6 +114,60 @@ class ModCourtUsageHelper
         return $data;
     }
 
+    public static function usersStatus($begin, $end)
+    {
+        $db = &JFactory::getDbo();
+
+        /* Nombre de groupes (famille, couple, adulte) */
+        $query = $db->getQuery(true);
+        $query->select(array('group_id', 'block'))
+              ->from($db->quoteName('#__users'))
+              ->where($db->quoteName('block') . '= 0')
+              ->group($db->quoteName('group_id'));
+        $db->setQuery($query);
+        $res = $db->loadAssocList();
+
+        $s = '<p>Nombre de groupes (famille, couple, adulte, ...): ' . sizeof($res) . '</p>';
+              
+        /* Nombre de joueurs */
+        $query = $db->getQuery(true);
+        $query->select(array('id', 'block'))
+              ->from($db->quoteName('#__users'))
+              ->where($db->quoteName('block') . '= 0');
+        $db->setQuery($query);
+        $res = $db->loadAssocList();
+
+        $s .= '<p>Nombre de joueurs: ' . sizeof($res) . '</p>';
+
+        /* Nombre de groupes sans password (jamais reserve) */
+        $query = $db->getQuery(true);
+        $query->select(array('group_id', 'block'))
+              ->from($db->quoteName('#__users'))
+              ->group($db->quoteName('group_id'))
+              ->where($db->quoteName('block') . '='. $db->quote(0) . ' and ' .
+              	$db->quoteName('requireReset') . '=' . $db->quote(1));
+        $db->setQuery($query);
+        $res = $db->loadAssocList();
+
+        $s .= "<p>Nombre de groupes n'ayant jamais reserve le court: " . sizeof($res) . '</p>';
+
+        /* Nombre de groupes desinscrits */
+        $query = $db->getQuery(true);
+        $query->select(array('group_id', 'block'))
+              ->from($db->quoteName('#__users'))
+              ->group($db->quoteName('group_id'))
+              ->where($db->quoteName('block') . '='. $db->quote(1));
+        $db->setQuery($query);
+        $res = $db->loadAssocList();
+
+        $s .= "<p>Nombre de groupes desinscrit: " . sizeof($res) . '</p>';
+       
+        /* Par la periode donnee: */
+        /* Nombre de reservations normal, manif, cours */
+
+        return $s;
+    }
+    
     public static function getAjax()
     {
  		$input  = &JFactory::getApplication()->input;
@@ -127,6 +181,9 @@ class ModCourtUsageHelper
             return ModCourtUsageHelper::chart($input->get('type'),
             	$input->get('begin'), $input->get('end'));
 
+        case 'usersStatus':
+            return ModCourtUsageHelper::usersStatus();
+            
         case 'exportDb':
             return ModTennisExport::exportDb($input->get('begin'), $input->get('end'));
 

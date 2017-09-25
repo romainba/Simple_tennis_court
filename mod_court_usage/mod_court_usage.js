@@ -64,6 +64,30 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
     })
 }
 
+function users_status(elem) {
+    var req = {
+	'option' : 'com_ajax',
+	'module' : 'court_usage',
+	'format' : AJAX_FMT,
+	'cmd'    : 'usersStatus',
+    };
+
+    jQuery.ajax({
+	type : 'POST',
+	data: req,
+	
+	success: function(response) {
+	    var cell = document.getElementById(elem);
+	    cell.innerHTML = response.data;
+	},
+	error: function(response) {
+	    debug && console.log("ajax failed:");
+	    debug && console.log(response);
+	    alert("internal error");
+	}
+    })
+}
+
 jQuery(document).ready(function() {
 
     jQuery(".exportBtn").click(function(event) {
@@ -80,6 +104,8 @@ jQuery(document).ready(function() {
 	    draw_charts();
 	}
     });
+
+    users_status('status');
 })
 		       
 function exportEvent(cmd, begin, end)
