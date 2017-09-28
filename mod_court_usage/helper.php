@@ -128,7 +128,7 @@ class ModCourtUsageHelper
         $res = $db->loadAssocList();
 
         $s = '<p>Nombre de groupes (famille, couple, adulte, ...): ' . sizeof($res) . '</p>';
-              
+
         /* Nombre de joueurs */
         $query = $db->getQuery(true);
         $query->select(array('id', 'block'))
@@ -185,7 +185,7 @@ class ModCourtUsageHelper
             	$input->get('begin'), $input->get('end'));
 
         case 'usersStatus':
-            return ModCourtUsageHelper::usersStatus();
+            return ModCourtUsageHelper::usersStatus($input->get('begin'), $input->get('end'));
 
         case 'exportMsg':
             if ($manager)
