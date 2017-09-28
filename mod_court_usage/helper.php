@@ -167,11 +167,14 @@ class ModCourtUsageHelper
 
         return $s;
     }
-    
+
     public static function getAjax()
     {
  		$input  = &JFactory::getApplication()->input;
         $cmd = $input->get('cmd');
+
+        $user = &JFactory::getUser();
+        $manager = in_array(GRP_MANAGER, $user->get('groups'));
 
         if (is_null($cmd))
             return ERR_INVAL;
@@ -183,6 +186,18 @@ class ModCourtUsageHelper
 
         case 'usersStatus':
             return ModCourtUsageHelper::usersStatus();
+
+        case 'exportMsg':
+            if ($manager)
+                $s = '<p>Exporter les reservations faites du '.
+                    '<input type="text" name="debut" class="dp" id="exportBegin" '.
+                    'value="2017-01-01" style="width:100px"/>'.
+                    ' au <input type="text" name="fin" class="dp" id="exportEnd" '.
+                    'value="2017-12-31" style="width:100px"/>.</p>'.
+                    '<input type="submit" class="exportBtn" value="export" id="exportDb"/>';
+            else
+                $s = '';
+            return $s;
             
         case 'exportDb':
             return ModTennisExport::exportDb($input->get('begin'), $input->get('end'));

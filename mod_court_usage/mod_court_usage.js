@@ -4,8 +4,6 @@ const ERR_INTERNAL = 2;
 
 const AJAX_FMT = "JSON";
 
-const debug = true;
-
 var width;
 
 google.charts.load('current', {'packages':['corechart']});
@@ -57,8 +55,6 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
             chart.draw(data, options);
 	},
 	error: function(response) {
-	    debug && console.log("ajax failed:");
-	    debug && console.log(response);
 	    alert("internal error");
 	}
     })
@@ -81,20 +77,44 @@ function users_status(elem) {
 	    cell.innerHTML = response.data;
 	},
 	error: function(response) {
-	    debug && console.log("ajax failed:");
-	    debug && console.log(response);
 	    alert("internal error");
 	}
     })
 }
 
+function getExportMsg(elem) {
+    var req = {
+	'option' : 'com_ajax',
+	'module' : 'court_usage',
+	'format' : AJAX_FMT,
+	'cmd'    : 'exportMsg',
+    };
+
+    jQuery.ajax({
+	type : 'POST',
+	data: req,
+	
+	success: function(response) {
+	    if (response.data) {
+		var cell = document.getElementById(elem);
+		cell.innerHTML = response.data;
+
+		jQuery(".exportBtn").click(function(event) {
+		    var a = document.getElementById("exportBegin");
+		    var b = document.getElementById("exportEnd");
+		    exportEvent(event.target.id, a.value, b.value);
+		});
+	    }
+	},
+	error: function(response) {
+	    alert("internal error");
+	}
+    });
+}
+
 jQuery(document).ready(function() {
 
-    jQuery(".exportBtn").click(function(event) {
-	var a = document.getElementById("exportBegin");
-	var b = document.getElementById("exportEnd");
-	exportEvent(event.target.id, a.value, b.value);
-    });
+    getExportMsg("excel");
 
     width = jQuery("#chart1").css("width");
     jQuery(window).on('resize', function() {
@@ -133,8 +153,6 @@ function exportEvent(cmd, begin, end)
 	},
 
 	error: function(response) {
-	    debug && console.log("ajax buttonEvent failed");
-	    debug && console.log(response);
     	    alert("internal error");
 	}
     })
