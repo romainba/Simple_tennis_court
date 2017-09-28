@@ -108,7 +108,7 @@ class ModTennisExport {
         
         $query->select($db->quoteName(array_column($header, 1)))
               ->from($db->quoteName('#__users', 'a'))
-              ->join('INNER', $db->quoteName('#__abo_type', 'b') .
+              ->join('LEFT', $db->quoteName('#__abo_type', 'b') .
               ' on (' . $db->quoteName('a.abonnement') . ' = ' . $db->quoteName('b.id') . ')')
               ->order($db->quoteName('a.id').' ASC');
 
