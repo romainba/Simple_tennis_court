@@ -11,14 +11,28 @@ google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
     draw_chart('chart1',
-	       'court-usage',
+	       'court-usage 2018',
+	       "Utilisation du court pour l'annee 2018",
+	       '2018-01-01',
+	       '2018-12-31',
+	       true,
+	       '# reservations');
+    draw_chart('chart2',
+	       'player-histo 2018',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
+	       '2018-01-01',
+	       '2018-12-31',
+	       false,
+	      '# reservations');
+    draw_chart('chart3',
+	       'court-usage 2017',
 	       "Utilisation du court pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart2',
-	       'player-histo',
+    draw_chart('chart4',
+	       'player-histo 2017',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
