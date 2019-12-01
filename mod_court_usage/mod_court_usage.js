@@ -10,28 +10,42 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
-    draw_chart('chart1',
+    draw_chart('chart5',
+	       'court-usage',
+	       "Utilisation du court pour l'annee 2019",
+	       '2019-01-01',
+	       '2019-12-31',
+	       true,
+	       '# reservations');
+    draw_chart('chart6',
+	       'player-histo',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2019",
+	       '2019-01-01',
+	       '2019-12-31',
+	       false,
+	      '# reservations');
+    draw_chart('chart3',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart2',
+    draw_chart('chart4',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       false,
 	      '# reservations');
-    draw_chart('chart3',
+    draw_chart('chart1',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart4',
+    draw_chart('chart2',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
 	       '2017-01-01',
