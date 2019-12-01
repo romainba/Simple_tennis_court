@@ -10,42 +10,45 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
-    draw_chart('chart5',
+    users_status('stats3','2019-01-01','2019-12-31');   
+    draw_chart('chart3a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2019",
 	       '2019-01-01',
 	       '2019-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart6',
+    draw_chart('chart3b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2019",
 	       '2019-01-01',
 	       '2019-12-31',
 	       false,
 	      '# reservations');
-    draw_chart('chart3',
+    users_status('stats2','2018-01-01','2018-12-31');   
+    draw_chart('chart2a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart4',
+    draw_chart('chart2b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       false,
 	      '# reservations');
-    draw_chart('chart1',
+    users_status('stats1','2017-01-01','2017-12-31');   
+    draw_chart('chart1a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart2',
+    draw_chart('chart1b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
 	       '2017-01-01',
@@ -88,12 +91,14 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
     })
 }
 
-function users_status(elem) {
+function users_status(elem, begin, end) {
     var req = {
 	'option' : 'com_ajax',
 	'module' : 'court_usage',
 	'format' : AJAX_FMT,
 	'cmd'    : 'usersStatus',
+	'begin'  : begin,
+	'end'    : end,
     };
 
     jQuery.ajax({
@@ -152,8 +157,6 @@ jQuery(document).ready(function() {
 	    draw_charts();
 	}
     });
-
-    users_status('status');
 })
 		       
 function exportEvent(cmd, begin, end)

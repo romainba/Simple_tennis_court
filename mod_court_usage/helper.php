@@ -114,6 +114,23 @@ class ModCourtUsageHelper
         return $data;
     }
 
+    static function getCount($type, $begin, $end)
+    {
+        $db = &JFactory::getDbo();
+	
+	$query = $db->getQuery(true);
+        $query->select(array('user1', 'user2', 'date'))
+              ->from($db->quoteName('#__reservation'))
+              ->order($db->quoteName('date').' ASC')
+              ->where($db->quoteName('date') . '>=' . $db->quote($begin) . ' and ' .
+              $db->quoteName('date') . '<=' . $db->quote($end) . ' and ' .
+	      $db->quoteName('type') . '=' . $db->quote($type));
+        $db->setQuery($query);
+	$res = $db->loadAssocList();
+	return sizeof($res);    
+    }
+    
+
     public static function usersStatus($begin, $end)
     {
         $db = &JFactory::getDbo();
@@ -127,7 +144,8 @@ class ModCourtUsageHelper
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-        $s = '<p>Nombre de groupes (famille, couple, adulte, ...): ' . sizeof($res) . '</p>';
+	$s = '<p style="margin-left:50px" >'; 
+        $s .= 'Nombre de groupes (famille, couple, adulte, ...): ' . sizeof($res) . '</br>';
 
         /* Nombre de joueurs */
         $query = $db->getQuery(true);
@@ -137,7 +155,7 @@ class ModCourtUsageHelper
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-        $s .= '<p>Nombre de joueurs: ' . sizeof($res) . '</p>';
+        $s .= 'Nombre de joueurs: ' . sizeof($res) . '</br>';
 
         /* Nombre de groupes sans password (jamais reserve) */
         $query = $db->getQuery(true);
@@ -149,7 +167,7 @@ class ModCourtUsageHelper
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-        $s .= "<p>Nombre de groupes n'ayant jamais reserve le court: " . sizeof($res) . '</p>';
+        $s .= "Nombre de groupes n'ayant jamais reserve le court: " . sizeof($res) . '</br>';
 
         /* Nombre de groupes desinscrits */
         $query = $db->getQuery(true);
@@ -160,17 +178,21 @@ class ModCourtUsageHelper
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-        $s .= "<p>Nombre de groupes desinscrit: " . sizeof($res) . '</p>';
-       
-        /* Par la periode donnee: */
-        /* Nombre de reservations normal, manif, cours */
+        $s .= "Nombre de groupes desinscrit: " . sizeof($res) . '</br>';
+
+        $s .= "Reservations normal, cours, manif: " .
+	   ModCourtUsageHelper::getCount(RES_TYPE_NORMAL, $begin, $end) . ", " . 
+ 	   ModCourtUsageHelper::getCount(RES_TYPE_COURS, $begin, $end) . ", " .
+	   ModCourtUsageHelper::getCount(RES_TYPE_MANIF, $begin, $end);
+
+	$s .= '</p>';
 
         return $s;
     }
 
     public static function getAjax()
     {
- 		$input  = &JFactory::getApplication()->input;
+	$input  = &JFactory::getApplication()->input;
         $cmd = $input->get('cmd');
 
         $user = &JFactory::getUser();
