@@ -10,7 +10,7 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
-    users_status('stats3','2019-01-01','2019-12-31');   
+    usersYearStatus('stats3','2019-01-01','2019-12-31', 1);   
     draw_chart('chart3a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2019",
@@ -25,7 +25,7 @@ function draw_charts() {
 	       '2019-12-31',
 	       false,
 	      '# reservations');
-    users_status('stats2','2018-01-01','2018-12-31');   
+    usersYearStatus('stats2','2018-01-01','2018-12-31', 1);   
     draw_chart('chart2a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2018",
@@ -40,7 +40,7 @@ function draw_charts() {
 	       '2018-12-31',
 	       false,
 	      '# reservations');
-    users_status('stats1','2017-01-01','2017-12-31');   
+    usersYearStatus('stats1','2017-01-01','2017-12-31', 0);   
     draw_chart('chart1a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2017",
@@ -91,14 +91,37 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
     })
 }
 
-function users_status(elem, begin, end) {
+function usersStatus(elem) {
     var req = {
 	'option' : 'com_ajax',
 	'module' : 'court_usage',
 	'format' : AJAX_FMT,
 	'cmd'    : 'usersStatus',
+    };
+
+    jQuery.ajax({
+	type : 'POST',
+	data: req,
+	
+	success: function(response) {
+	    var cell = document.getElementById(elem);
+	    cell.innerHTML = response.data;
+	},
+	error: function(response) {
+	    alert("internal error");
+	}
+    })
+}
+
+function usersYearStatus(elem, begin, end, showNewUsers) {
+    var req = {
+	'option' : 'com_ajax',
+	'module' : 'court_usage',
+	'format' : AJAX_FMT,
+	'cmd'    : 'usersYearStatus',
 	'begin'  : begin,
 	'end'    : end,
+	'showNewUsers': showNewUsers
     };
 
     jQuery.ajax({
@@ -157,6 +180,8 @@ jQuery(document).ready(function() {
 	    draw_charts();
 	}
     });
+
+    usersStatus('usersStatus'); 
 })
 		       
 function exportEvent(cmd, begin, end)

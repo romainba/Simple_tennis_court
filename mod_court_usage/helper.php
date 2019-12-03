@@ -130,8 +130,36 @@ class ModCourtUsageHelper
 	return sizeof($res);    
     }
     
+    public static function usersYearStatus($begin, $end, $showNewUsers)
+    {
+	$s = '<p style="margin-left:50px" >'; 
+	$s .= "Reservations normal " . ModCourtUsageHelper::getCount(RES_TYPE_NORMAL, $begin, $end) .  
+ 	   ", cours " . ModCourtUsageHelper::getCount(RES_TYPE_COURS, $begin, $end) .
+	   ", manif " . ModCourtUsageHelper::getCount(RES_TYPE_MANIF, $begin, $end) . '</br>';
 
-    public static function usersStatus($begin, $end)
+	if ($showNewUsers == 1) {   
+	   $db = &JFactory::getDbo();
+
+
+	   /* Nombre de nouveau joueurs */
+           $query = $db->getQuery(true);
+           $query->select(array('username'))
+               ->from($db->quoteName('#__users'))
+               ->where($db->quoteName('block') . '= 0 and ' .
+	               $db->quoteName('registerDate') . '>=' . $db->quote($begin) . ' and ' .
+                       $db->quoteName('registerDate') . '<=' . $db->quote($end));
+		      
+	   $db->setQuery($query);
+           $res = $db->loadAssocList();
+	
+           $s .= "nouveaux membres " . sizeof($res) . ': ';
+	   foreach ($res as $r)
+		$s .= $r['username'] . ', ';
+        } 
+	return $s . '</p>';
+    }
+
+    public static function usersStatus()
     {
         $db = &JFactory::getDbo();
 
@@ -180,14 +208,7 @@ class ModCourtUsageHelper
 
         $s .= "Nombre de groupes desinscrit: " . sizeof($res) . '</br>';
 
-        $s .= "Reservations normal, cours, manif: " .
-	   ModCourtUsageHelper::getCount(RES_TYPE_NORMAL, $begin, $end) . ", " . 
- 	   ModCourtUsageHelper::getCount(RES_TYPE_COURS, $begin, $end) . ", " .
-	   ModCourtUsageHelper::getCount(RES_TYPE_MANIF, $begin, $end);
-
-	$s .= '</p>';
-
-        return $s;
+        return $s . '</p>';
     }
 
     public static function getAjax()
@@ -207,7 +228,11 @@ class ModCourtUsageHelper
             	$input->get('begin'), $input->get('end'));
 
         case 'usersStatus':
-            return ModCourtUsageHelper::usersStatus($input->get('begin'), $input->get('end'));
+            return ModCourtUsageHelper::usersStatus();
+
+        case 'usersYearStatus':
+            return ModCourtUsageHelper::usersYearStatus($input->get('begin'), $input->get('end'),
+	    	   $input->get('showNewUsers'));
 
         case 'exportMsg':
             if ($manager)
