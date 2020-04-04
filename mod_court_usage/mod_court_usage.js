@@ -10,45 +10,60 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
-    usersYearStatus('stats3','2019-01-01','2019-12-31', 1);   
-    draw_chart('chart3a',
+    usersYearStatus('stats2020','2020-01-01','2020-12-31', 1);
+    draw_chart('chart2020a',
 	       'court-usage',
+	       "Utilisation du court pour l'annee 2020",
+	       '2020-01-01',
+	       '2020-12-31',
+	       true,
+ 	       '# reservations');
+    draw_chart('chart2020b',
+	       'player-histo',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2020",
+	       '2020-01-01',
+	       '2020-12-31',
+	       false,
+	       '# reservations');
+    usersYearStatus('stats2019','2019-01-01','2019-12-31', 1);
+    draw_chart('chart2019a',
+		'court-usage',
 	       "Utilisation du court pour l'annee 2019",
 	       '2019-01-01',
 	       '2019-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart3b',
+    draw_chart('chart2019b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2019",
 	       '2019-01-01',
 	       '2019-12-31',
 	       false,
 	      '# reservations');
-    usersYearStatus('stats2','2018-01-01','2018-12-31', 1);   
-    draw_chart('chart2a',
+    usersYearStatus('stats2018','2018-01-01','2018-12-31', 1);   
+    draw_chart('chart2018a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart2b',
+    draw_chart('chart2018b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2018",
 	       '2018-01-01',
 	       '2018-12-31',
 	       false,
 	      '# reservations');
-    usersYearStatus('stats1','2017-01-01','2017-12-31', 0);   
-    draw_chart('chart1a',
+    usersYearStatus('stats2017','2017-01-01','2017-12-31', 0);   
+    draw_chart('chart2017a',
 	       'court-usage',
 	       "Utilisation du court pour l'annee 2017",
 	       '2017-01-01',
 	       '2017-12-31',
 	       true,
 	       '# reservations');
-    draw_chart('chart1b',
+    draw_chart('chart2017b',
 	       'player-histo',
 	       "Histogramme d'utilisation du court par joueur pour l'annee 2017",
 	       '2017-01-01',
