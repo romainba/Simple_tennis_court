@@ -10,6 +10,21 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
+    usersYearStatus('stats2021','2021-01-01','2021-12-31', 1);
+    draw_chart('chart2021a',
+	       'court-usage',
+	       "Utilisation du court pour l'annee 2021",
+	       '2021-01-01',
+	       '2021-12-31',
+	       true,
+ 	       '# reservations');
+    draw_chart('chart2021b',
+	       'player-histo',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2021",
+	       '2021-01-01',
+	       '2021-12-31',
+	       false,
+	       '# reservations');
     usersYearStatus('stats2020','2020-01-01','2020-12-31', 1);
     draw_chart('chart2020a',
 	       'court-usage',
