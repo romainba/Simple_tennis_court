@@ -10,6 +10,36 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
+    usersYearStatus('stats2023','2023-01-01','2023-12-31', 1);
+    draw_chart('chart2023a',
+	       'court-usage',
+	       "Utilisation du court pour l'annee 2023",
+	       '2023-01-01',
+	       '2023-12-31',
+	       true,
+ 	       '# reservations');
+    draw_chart('chart2023b',
+	       'player-histo',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2023",
+	       '2023-01-01',
+	       '2023-12-31',
+	       false,
+	       '# reservations');
+    usersYearStatus('stats2022','2022-01-01','2022-12-31', 1);
+    draw_chart('chart2022a',
+	       'court-usage',
+	       "Utilisation du court pour l'annee 2022",
+	       '2022-01-01',
+	       '2022-12-31',
+	       true,
+ 	       '# reservations');
+    draw_chart('chart2022b',
+	       'player-histo',
+	       "Histogramme d'utilisation du court par joueur pour l'annee 2022",
+	       '2022-01-01',
+	       '2022-12-31',
+	       false,
+	       '# reservations');
     usersYearStatus('stats2021','2021-01-01','2021-12-31', 1);
     draw_chart('chart2021a',
 	       'court-usage',
