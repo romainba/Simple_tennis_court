@@ -2,6 +2,14 @@
 defined('_JEXEC') or die;
 
 echo '<div id="usersStatus"></div>'.
+    '<font size="4">Annee 2025</font>' .
+    '<div id="stats2025"></div>'.
+    '<div id="chart2025a"></div>'.
+    '<div id="chart2025b"></div><hr>'.
+    '<font size="4">Annee 2024</font>' .
+    '<div id="stats2024"></div>'.
+    '<div id="chart2024a"></div>'.
+    '<div id="chart2024b"></div><hr>'.
     '<font size="4">Annee 2023</font>' .
     '<div id="stats2023"></div>'.
     '<div id="chart2023a"></div>'.
