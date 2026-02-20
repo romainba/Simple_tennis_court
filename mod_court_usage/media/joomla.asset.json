@@ -1,0 +1,30 @@
+{
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+    "name": "mod_court_usage",
+    "version": "1.0.0",
+    "description": "Tennis court usage Module Assets",
+    "license": "GPL-2.0-or-later",
+    "assets": [
+	{
+	    "name": "google.charts",
+	    "type": "script",
+	    "uri": "https://www.gstatic.com/charts/loader.js",
+	    "attributes": {
+		"defer": true
+	    }
+	},
+	{
+	    "name": "mod_court_usage.mod_court_usage",
+	    "type": "script",
+	    "uri": "mod_court_usage/mod_court_usage.js",
+	    "dependencies": [
+		"google.charts",
+		"jquery",
+		"core"
+	    ],
+	    "attributes": {
+		"defer": true
+	    }
+	}
+    ]
+}

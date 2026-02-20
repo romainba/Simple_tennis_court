@@ -1,22 +1,27 @@
 <?php
+namespace Joomla\Module\CourtUsage\Site\Helper;
+
+defined('_JEXEC') or die;
+
+use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Date\Date;
+use DateInterval;
+use DatePeriod;
+use Joomla\CMS\Log\Log;
 
 const ERR_INVAL = 1;
 const ERR_INTERNAL = 2;
 const ERR_BD = 3;
 
 require_once JPATH_SITE . '/modules/mod_tennis/const.php';
-require_once dirname(__FILE__) . '/export.php';
 
-const ERR_NAMES = array("",
-"La requête est invalide",
-"Une erreur interne s'est produite",
-"Erreur avec database");
-
-class ModCourtUsageHelper
+class CourtUsageHelper
 {
-    public static function chart($type, $begin, $end)
+    public function chart($type, $begin, $end)
     {
-        $db = &JFactory::getDbo();
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
         $query = $db->getQuery(true);
 
         $query->select(array('a.user1', 'a.user2', 'a.date', 'b.name'))
@@ -26,27 +31,28 @@ class ModCourtUsageHelper
               ->order($db->quoteName('date').' ASC')
               ->where($db->quoteName('date') . '>=' . $db->quote($begin) . ' and ' .
               $db->quoteName('date') . '<=' . $db->quote($end));
-        
+
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-        $b = new DateTime($begin);
-        $e = new DateTime($end);
-
+        $b = new Date($begin);
+        $e = new Date($end);
+	
         switch ($type) {
         case 'court-usage':
-        
+
             $interval = DateInterval::createFromDateString('1 month');
             $period = new DatePeriod($b, $interval, $e);
-        
+
             $usage['date'] = array('normal', 'cours', 'manif');
-            foreach($period as $dt)
+            foreach($period as $dt) {
+	        // Log::add($dt->format("M Y"), Log::DEBUG, 'mod_court_usage');
                 $usage[$dt->format("M Y")] = array(0, 0, 0);
-            
+	    }
             foreach($res as $r) {
-                $d = new DateTime($r['date']);
+                $d = new Date($r['date']);
                 $k = $d->format("M Y");
-                
+
                 for ($i = 1; $i < 4; $i++)
                     if (RES_TYPE[$i] == $r['name']) {
                         $usage[$k][$i - 1]++;
@@ -73,7 +79,7 @@ class ModCourtUsageHelper
             foreach($res as $r) {
                 $p = intval($r['user1']);
                 $users[$p]++;
-                
+
                 $p = intval($r['user2']);
                 $users[$p]++;
             }
@@ -96,7 +102,7 @@ class ModCourtUsageHelper
                     return ( ($v >= $a) && ($v <= $b) );
                 });
             }
-            
+
             $data = array();
             $data[] = array('#res', '#joueur');
             foreach($bins as $bin) {
@@ -106,7 +112,7 @@ class ModCourtUsageHelper
                 $data[] = array(strval($l), count($hist[$a . "-" . $b]));
             }
             break;
-            
+
         case 'group-histo':
 
             break;
@@ -114,54 +120,54 @@ class ModCourtUsageHelper
         return $data;
     }
 
-    static function getCount($type, $begin, $end)
+    function getCount($type, $begin, $end)
     {
-        $db = &JFactory::getDbo();
-	
-	$query = $db->getQuery(true);
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+
+        $query = $db->getQuery(true);
         $query->select(array('user1', 'user2', 'date'))
               ->from($db->quoteName('#__reservation'))
               ->order($db->quoteName('date').' ASC')
               ->where($db->quoteName('date') . '>=' . $db->quote($begin) . ' and ' .
               $db->quoteName('date') . '<=' . $db->quote($end) . ' and ' .
-	      $db->quoteName('type') . '=' . $db->quote($type));
+              $db->quoteName('type') . '=' . $db->quote($type));
         $db->setQuery($query);
-	$res = $db->loadAssocList();
-	return sizeof($res);    
+        $res = $db->loadAssocList();
+        return sizeof($res);
     }
-    
-    public static function usersYearStatus($begin, $end, $showNewUsers)
+
+    public function usersYearStatus($begin, $end, $showNewUsers)
     {
-	$s = '<p style="margin-left:50px" >'; 
-	$s .= "Reservations normal " . ModCourtUsageHelper::getCount(RES_TYPE_NORMAL, $begin, $end) .  
- 	   ", cours " . ModCourtUsageHelper::getCount(RES_TYPE_COURS, $begin, $end) .
-	   ", manif " . ModCourtUsageHelper::getCount(RES_TYPE_MANIF, $begin, $end) . '</br>';
+        $s = '<p style="margin-left:50px" >';
+        $s .= "Reservations normal " . $this->getCount(RES_TYPE_NORMAL, $begin, $end) .
+            ", cours " . $this->getCount(RES_TYPE_COURS, $begin, $end) .
+           ", manif " . $this->getCount(RES_TYPE_MANIF, $begin, $end) . '</br>';
 
-	if ($showNewUsers == 1) {   
-	   $db = &JFactory::getDbo();
+        if ($showNewUsers == 1) {
+           $db = Factory::getContainer()->get(DatabaseInterface::class);
 
-
-	   /* Nombre de nouveau joueurs */
+           /* Nombre de nouveau joueurs */
            $query = $db->getQuery(true);
            $query->select(array('username'))
                ->from($db->quoteName('#__users'))
                ->where($db->quoteName('block') . '= 0 and ' .
-	               $db->quoteName('registerDate') . '>=' . $db->quote($begin) . ' and ' .
+                       $db->quoteName('registerDate') . '>=' . $db->quote($begin) . ' and ' .
                        $db->quoteName('registerDate') . '<=' . $db->quote($end));
-		      
-	   $db->setQuery($query);
+
+           $db->setQuery($query);
            $res = $db->loadAssocList();
-	
+
            $s .= "nouveaux membres " . sizeof($res) . ': ';
-	   foreach ($res as $r)
-		$s .= $r['username'] . ', ';
-        } 
-	return $s . '</p>';
+           foreach ($res as $r)
+                $s .= $r['username'] . ', ';
+        }
+	$s .= '</p>';
+        return $s;
     }
 
-    public static function usersStatus()
+    public function usersStatus()
     {
-        $db = &JFactory::getDbo();
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
 
         /* Nombre de groupes (famille, couple, adulte) */
         $query = $db->getQuery(true);
@@ -172,7 +178,7 @@ class ModCourtUsageHelper
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
-	$s = '<p style="margin-left:50px" >'; 
+        $s = '<p style="margin-left:50px" >';
         $s .= 'Nombre de groupes (famille, couple, adulte, ...): ' . sizeof($res) . '</br>';
 
         /* Nombre de joueurs */
@@ -191,7 +197,7 @@ class ModCourtUsageHelper
               ->from($db->quoteName('#__users'))
               ->group($db->quoteName('group_id'))
               ->where($db->quoteName('block') . '='. $db->quote(0) . ' and ' .
-              	$db->quoteName('requireReset') . '=' . $db->quote(1));
+                      $db->quoteName('requireReset') . '=' . $db->quote(1));
         $db->setQuery($query);
         $res = $db->loadAssocList();
 
@@ -211,43 +217,28 @@ class ModCourtUsageHelper
         return $s . '</p>';
     }
 
-    public static function getAjax()
+    public function getAjax()
     {
-	$input  = &JFactory::getApplication()->input;
+        $input  = Factory::getApplication()->getInput();
         $cmd = $input->get('cmd');
 
-        $user = &JFactory::getUser();
-        $manager = in_array(GRP_MANAGER, $user->get('groups'));
+	$post = $input->post->getArray();
+	// Log::add('getAjax ' . print_r($post, true), Log::DEBUG, 'mod_court_usage');
 
         if (is_null($cmd))
             return ERR_INVAL;
 
         switch ($cmd) {
         case 'chart':
-            return ModCourtUsageHelper::chart($input->get('type'),
-            	$input->get('begin'), $input->get('end'));
+            return $this->chart($input->get('type'),
+                    $input->get('begin'), $input->get('end'));
 
         case 'usersStatus':
-            return ModCourtUsageHelper::usersStatus();
+            return $this->usersStatus();
 
         case 'usersYearStatus':
-            return ModCourtUsageHelper::usersYearStatus($input->get('begin'), $input->get('end'),
-	    	   $input->get('showNewUsers'));
-
-        case 'exportMsg':
-            if ($manager)
-                $s = '<p>Exporter les reservations faites du '.
-                    '<input type="text" name="debut" class="dp" id="exportBegin" '.
-                    'value="2017-01-01" style="width:100px"/>'.
-                    ' au <input type="text" name="fin" class="dp" id="exportEnd" '.
-                    'value="2017-12-31" style="width:100px"/>.</p>'.
-                    '<input type="submit" class="exportBtn" value="export" id="exportDb"/>';
-            else
-                $s = '';
-            return $s;
-            
-        case 'exportDb':
-            return ModTennisExport::exportDb($input->get('begin'), $input->get('end'));
+            return $this->usersYearStatus($input->get('begin'), $input->get('end'),
+                       $input->get('showNewUsers'));
 
         default:
             return ERR_INVAL;

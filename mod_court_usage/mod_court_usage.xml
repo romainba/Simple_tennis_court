@@ -1,25 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="module" version="3.1.0" client="site" method="upgrade">
-  <name>Tennis court usage</name>
-  <author>Romain</author>
+<extension type="module" client="site" method="upgrade">
+  <name>Joomla module Tennis court usage</name>
   <version>1.0.0</version>
-  <description>Tennis court usage</description>
-
+  <author>Romain Baeriswyl</author>
+  <description>Module to show tennis court usage</description>
+  <namespace path="src">Joomla\Module\CourtUsage</namespace>
   <files>
-    <filename module="mod_court_usage">mod_court_usage.php</filename>
-    <filename>index.html</filename>
-    <filename>mod_court_usage.js</filename>
-    <filename>helper.php</filename>
-    <filename>export.php</filename>
-    <filename>stylesheet.css</filename>
+    <folder module="mod_court_usage">services</folder>
+    <folder>src</folder>
     <folder>tmpl</folder>
-    <filename>tmpl/default.php</filename>
-    <filename>tmpl/index.html</filename>
   </files>
-  
+  <media destination="mod_court_usage" folder="media">
+    <filename>joomla.asset.json</filename>
+    <folder>js</folder>
+    <folder>css</folder>
+  </media>
   <config>
     <fields name="params">
     </fields>
   </config>
-  
 </extension>
