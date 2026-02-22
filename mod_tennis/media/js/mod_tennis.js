@@ -28,10 +28,11 @@ function getStrings()
 	data : req,
 	async: false,
 
-	success: function (response) {
-	    ERR_NAMES = response.data[0];
-	    RES_TYPE = response.data[1];
-	    RES_TYPE_CLASS = response.data[2];
+	success: function (data) {
+	    var resp = JSON.parse(data);
+	    ERR_NAMES = resp.data[0];
+	    RES_TYPE = resp.data[1];
+	    RES_TYPE_CLASS = resp.data[2];
 	},
 
 	error: function(response) {
@@ -84,7 +85,7 @@ function message(msg)
     popup.modal("show");
 
     jQuery('input').click(function() {
-    	popup.modal('hide');
+	popup.modal('hide');
     });
 }
 
@@ -97,7 +98,7 @@ function showCal(cal)
     e.style.display = cal ? '' : 'none';
     e = document.getElementById("sel-player");
     e.style.display = cal ? 'none' : '';
-    
+
     cal && showCalendar('currCal', parseInt(width, 10));
 
     return e;
@@ -127,13 +128,14 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 	type   : 'POST',
 	data   : req,
 
-    	success: function(response) {
-	    var data = parseInt(response.data);
+	success: function(data) {
+	    var resp = JSON.parse(data);
+	    var data = parseInt(resp.data);
 
 	    if (isNaN(data)) {
 		/* update cell in calendar */
-		cell.innerHTML = response.data;
-		cell.className = (response.data == "") ?
+		cell.innerHTML = resp.data;
+		cell.className = (resp.data == "") ?
 		    RES_TYPE_CLASS[RES_TYPE_NONE] : RES_TYPE_CLASS[resType];
 
 		if (msgElem)
@@ -168,13 +170,14 @@ function reserveCancel()
     };
 
     debug && console.log("reserveCancel");
-    
+
      jQuery.ajax({
 	type   : 'POST',
 	data   : req,
 
-    	success: function(response) {
-	    var data = parseInt(response.data);
+	success: function(data) {
+	    var resp = JSON.parse(data);
+	    var data = parseInt(resp.data);
 	    if (data)
 		message(ERR_NAMES[data]);
 
@@ -207,8 +210,9 @@ function showSelPlayer(date, hour, cell)
 	data   : req,
 	dataType: 'json',
 
-    	success: function(response) {
-	    var data = response.data;
+	success: function(data) {
+	    var resp = JSON.parse(data);
+	    var data = resp.data;
 	    if (!isNaN(parseInt(data)))
 		message(ERR_NAMES[data]);
 	    else {
@@ -216,7 +220,7 @@ function showSelPlayer(date, hour, cell)
 		e.innerHTML = data;
 
 		jQuery(".player").clearSearch();
-		
+
 		jQuery("#reserveBtn").click(function(event) {
 		    reserveReq(RES_TYPE_NORMAL,
 			       document.getElementById("player1").value,
@@ -284,13 +288,15 @@ function showCalendar(cmd, width)
 	type   : 'POST',
 	data : req,
 
-	success: function (response) {
+	success: function (data) {
+	    var resp = JSON.parse(data);
+
 	    var e = document.getElementById("calendar");
 	    /* update whole calendar */
-	    if (!isNaN(parseInt(response.data)))
-		e.innerHTML = ERR_NAMES[response.data];
+	    if (!isNaN(parseInt(resp.data)))
+		e.innerHTML = ERR_NAMES[resp.data];
 	    else
-		e.innerHTML = response.data;
+		e.innerHTML = resp.data;
 	    e.style.display = '';
 	},
 
@@ -315,14 +321,16 @@ function showCalHeader()
 	type   : 'POST',
 	data : req,
 
-	success: function (response) {
+	success: function (data) {
+	    var resp = JSON.parse(data);
+
 	    var e = document.getElementById("cal-header");
 	    /* update whole calendar */
-	    if (!isNaN(parseInt(response.data)))
-		w.innerHTML = ERR_NAMES[response.data];
+	    if (!isNaN(parseInt(resp.data)))
+		w.innerHTML = ERR_NAMES[resp.data];
 	    else {
-		e.innerHTML = response.data;
-		
+		e.innerHTML = resp.data;
+
 	    }
 	    e.style.display = '';
 
@@ -352,13 +360,15 @@ function filldataList()
 	'cmd'    : 'getUsersName',
 	'format' : AJAX_FMT,
     };
-    
+
     jQuery.ajax({
 	type   : 'POST',
 	data : req,
 
-	success: function (response) {
-	    response.data.forEach(function(item) {
+	success: function (data) {
+	    var resp = JSON.parse(data);
+
+	    resp.data.forEach(function(item) {
 		var option = document.createElement('option');
 		option.value = item;
 		dataList.appendChild(option);
@@ -375,7 +385,7 @@ function filldataList()
 
 
 
-function detectMob() { 
+function detectMob() {
     return (navigator.userAgent.match(/Android/i)
 	    || navigator.userAgent.match(/webOS/i)
 	    || navigator.userAgent.match(/iPhone/i)
@@ -399,9 +409,8 @@ jQuery(document).ready(function() {
 	var w = jQuery("#calendar").css("width");
 	/* check calendar shown */
 	if (w != width) {
-    	    width = w;
-    	    showCalendar('currCal', parseInt(w, 10));
+	    width = w;
+	    showCalendar('currCal', parseInt(w, 10));
 	}
     });
 })
-

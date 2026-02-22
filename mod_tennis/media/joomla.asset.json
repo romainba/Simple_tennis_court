@@ -1,0 +1,21 @@
+{
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+    "name": "mod_tennis",
+    "version": "1.0.0",
+    "description": "Tennis court booking",
+    "license": "GPL-2.0-or-later",
+    "assets": [
+	{
+	    "name": "mod_tennis.mod_tennis",
+	    "type": "script",
+	    "uri": "mod_court_tennis/mod_tennis.js",
+	    "dependencies": [
+		"jquery",
+		"core"
+	    ],
+	    "attributes": {
+		"defer": true
+	    }
+	}
+    ]
+}

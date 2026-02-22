@@ -1,58 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<extension type="module" version="3.1.0" client="site" method="upgrade">
-<name>Tennis</name>
-<author>Romain</author>
-<version>1.0.0</version>
-<description>Tennis module</description>
-
-<files>
-  <filename module="mod_tennis">mod_tennis.php</filename>
-  <filename>index.html</filename>
-  <filename>mod_tennis.js</filename>
-  <filename>helper.php</filename>
-  <filename>stylesheet.css</filename>
-  <folder>tmpl</folder>
-  <filename>tmpl/default.php</filename>
-  <filename>tmpl/index.html</filename>
-</files>
-
-<config>
-  <fields name="params">
-    <fieldset name="basic">
-      <field name="start_hour"
-	     type="text"
-	     default="8"
-	     label="Starting hour"
-	     description="Starting hour" />
-      <field name="end_hour"
-	     type="text"
-	     default="20"
-	     label="Ending hour"
-	     description="Ending hour" />
-      <field name="max_reserv"
-	     type="text"
-	     default="1"
-	     label="Max. number of reservation"
-	     description="Maximum number of reservation allowed" />
-      <field name="nb_week"
-	     type="text"
-	     default="2"
-	     label="Number of week to show"
-	     description="Number of week to show one the same page" />
-      <field name="delay"
-	     type="text"
-	     default="45"
-	     label="reservation delay"
-	     description="delai en minutes avant de pouvoir reserver a nouveau">
-      </field>
-      <field name="timeout"
-	     type="text"
-	     default="5"
-	     label="reservation timeout"
-	     description="temps en minutes pour faire une reservation">
-      </field>
-    </fieldset>
-  </fields>
-</config>
-
+<extension type="module" client="site" method="upgrade">
+  <name>Joomla module Tennis reservation</name>
+  <version>1.0.0</version>
+  <author>Romain Baeriswyl</author>
+  <description>Module to manage the booking of  a tennis court</description>
+  <namespace path="src">Joomla\Module\Tennis</namespace>
+  <files>
+    <folder module="mod_tennis">services</folder>
+    <folder>src</folder>
+    <folder>tmpl</folder>
+  </files>
+  <media destination="mod_tennis" folder="media">
+    <filename>joomla.asset.json</filename>
+    <folder>js</folder>
+    <folder>css</folder>
+  </media>
+  <config>
+    <fields name="params">
+    </fields>
+  </config>
 </extension>
