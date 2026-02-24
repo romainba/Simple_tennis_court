@@ -6,9 +6,13 @@
     "license": "GPL-2.0-or-later",
     "assets": [
 	{
+	    "name": "mod_tennis.styles",
+	    "type": "style",
+	    "uri": "mod_tennis/stylesheet.css"
+	}, {
 	    "name": "mod_tennis.mod_tennis",
 	    "type": "script",
-	    "uri": "mod_court_tennis/mod_tennis.js",
+	    "uri": "mod_tennis/mod_tennis.js",
 	    "dependencies": [
 		"jquery",
 		"core"

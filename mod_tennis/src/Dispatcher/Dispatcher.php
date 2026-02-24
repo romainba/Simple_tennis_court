@@ -7,13 +7,13 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Dispatcher\DispatcherInterface;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Application\CMSApplicationInterface;
 use Joomla\Input\Input;
 use Joomla\Registry\Registry;
 use Joomla\CMS\Helper\HelperFactoryAwareInterface;
 use Joomla\CMS\Helper\HelperFactoryAwareTrait;
-use Joomla\Module\YourModule\Site\Helper\TennisHelper;
 
 class Dispatcher implements DispatcherInterface, HelperFactoryAwareInterface
 {
@@ -36,10 +36,15 @@ class Dispatcher implements DispatcherInterface, HelperFactoryAwareInterface
 	    ['mod_tennis']
 	);
 
-        $params = new Registry($this->module->params);
+	$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
 
-        // PASS $params to helper
-        $data = TennisHelper::getData($params);
+	$wa->useScript('bootstrap.modal');
+
+	$wa->getRegistry()->addExtensionRegistryFile('mod_tennis');
+	$wa->useStyle('mod_tennis.styles');
+	$wa->useScript('mod_tennis.mod_tennis');
+
+        $params = new Registry($this->module->params);
 
         require ModuleHelper::getLayoutPath('mod_tennis', $params->get('layout', 'default'));
     }

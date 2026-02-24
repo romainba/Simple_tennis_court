@@ -1,12 +1,3 @@
-<?php
-defined('_JEXEC') or die;
-
-$wa = $this->app->getDocument()->getWebAssetManager();
-$wa->getRegistry()->addExtensionRegistryFile('mod_tennis');
-$wa->useScript('mod_tennis.mod_tennis');
-
-?>
-
 <style>input::-webkit-calendar-picker-indicator {display:none;}</style>
 <datalist id="userlist"></datalist>
 <div class="modal hide" id="message"></div>

@@ -1,5 +1,7 @@
 <?php
 
+namespace Joomla\Module\Tennis\Site\Helper;
+
 const RES_TYPE_NONE = 0;
 const RES_TYPE_NORMAL = 1;
 const RES_TYPE_COURS = 2; /* cours de tennis */
@@ -11,7 +13,7 @@ const RES_TYPE_CLASS = array("day", "day-busy", "day-cours", "day-manif", "day-p
 
 const ABO_TYPE = array("Famille", "Couple", "Adulte", "Etudiant", "Junior", 
         "Cadet", "Comite", "Membre d'honneur");
-    
+
 const GRP_MANAGER = 6; /* from Joomla table */
 
 const ERR_INVAL = 1;

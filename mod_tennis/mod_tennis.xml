@@ -17,6 +17,40 @@
   </media>
   <config>
     <fields name="params">
-    </fields>
+     <fieldset name="basic">
+      <field name="start_hour"
+	     type="text"
+	     default="8"
+	     label="Starting hour"
+	     description="Starting hour" />
+      <field name="end_hour"
+	     type="text"
+	     default="20"
+	     label="Ending hour"
+	     description="Ending hour" />
+      <field name="max_reserv"
+	     type="text"
+	     default="1"
+	     label="Max. number of reservation"
+	     description="Maximum number of reservation allowed" />
+      <field name="nb_week"
+	     type="text"
+	     default="2"
+	     label="Number of week to show"
+	     description="Number of week to show one the same page" />
+      <field name="delay"
+	     type="text"
+	     default="45"
+	     label="reservation delay"
+	     description="delai en minutes avant de pouvoir reserver a nouveau">
+      </field>
+      <field name="timeout"
+	     type="text"
+	     default="5"
+	     label="reservation timeout"
+	     description="temps en minutes pour faire une reservation">
+      </field>
+    </fieldset>
+   </fields>
   </config>
 </extension>

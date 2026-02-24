@@ -6,8 +6,6 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\CMS\User\User;
 use Joomla\CMS\User\UserFactoryInterface;
-use Joomla\CMS\Application\CMSApplicationInterface;
-use Joomla\CMS\Session\SessionInterface;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Date\Date;
@@ -17,37 +15,42 @@ use Joomla\CMS\Log\Log;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\Registry\Registry;
 
-//JHTML::_('behavior.modal', 'a.modal');
-
 require_once dirname(__FILE__) . '/const.php';
 
 const hourWidth = 50; /* pixel */
 const cellWidth = 100; /* pixel */
 
-class ModTennisHelper
+class TennisHelper
 {
     private $params;
+    private $db;
+    private $userFactory;
 
     function __construct()
     {
         /* get module parameters */
         $module = ModuleHelper::getModule('mod_tennis');
         $this->params = new Registry($module->params);
+
+        $this->db = Factory::getContainer()->get(DatabaseInterface::class);
+	$this->userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
+
+	Log::add('ModTennisHelper construct');
     }
 
     public function getWeekReservation($date)
     {
         /* delete any pending reservation first */
-        $ret = $this->resDelete(null, null, $this->params);
-        if ($ret)
-            return $ret;
+        //$ret = $this->resDelete(null, null);
+        //if ($ret)
+        //    return $ret;
 
         /* get now all reservation of the week */
         $start = $date->format('Y-m-d');
         $date->modify("+7 days");
         $end = $date->format('Y-m-d');
 
-        $db = Factory::getContainer()->get(DatabaseInterface::class);
+	$db = $this->db;
         $query= $db->getQuery(true);
 
         $query->select($db->quoteName(array('id', 'user1', 'user2', 'date', 'type')))
@@ -62,7 +65,7 @@ class ModTennisHelper
 
     public function loadUsersName()
     {
-        $db = Factory::getContainer()->get(DatabaseInterface::class);
+    	$db = $this->db;
         $query = $db->getQuery(true);
 
         $query->select($db->quoteName(array('id', 'username')))
@@ -75,9 +78,9 @@ class ModTennisHelper
 
     public function buildCalHeader()
     {
-        $app = Factory::getContainer()->get(CMSApplicationInterface::class);
+        $app = Factory::getApplication();
         $user = $app->getIdentity();
-        $today = new DateTime('now', timezone_open('Europe/Zurich'));
+        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
 
         # to fill cal-header division
         $str = "<p>Bonjour ".$user->name.", il est ".$today->format('G:i').". " .
@@ -128,9 +131,9 @@ class ModTennisHelper
         $cell_width = (($w / $num) >> 0) + 1;
         $cell_width = $cell_width * 100 / $width;
 
-        $session = Factory->getContainer()->get(SessionInterface::class);
-        $inc = $session->get('date');
-
+        $session = Factory::getApplication()->getSession();
+        $inc = $session->get('date', 0);
+        Log::add('session date ' . $inc);
         if ($cmd == 'prevCal')
             $inc -= $num;
         else if ($cmd == 'nextCal')
@@ -141,11 +144,12 @@ class ModTennisHelper
         else
             $session->set('date', $inc);
 
-        $today = new DateTime('now', timezone_open('Europe/Zurich'));
-        $date = new DateTime('now', timezone_open('Europe/Zurich'));
+        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
+        $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
+	Log::add($inc.' days');
         $date->modify($inc.' days');
 
-        $app = Factory::getContainer()->get(CMSApplicationInterface::class);
+        $app = Factory::getApplication();
         $user = $app->getIdentity();
 
         $begin = $this->params->get('start_hour');
@@ -177,9 +181,8 @@ class ModTennisHelper
 
                 if ($item) {
                     $resType = $item["type"];
-                    $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
-                    $user1 = $userFactory->loadUserById($item['user1']);
-                    $user2 = $userFactory->loadUserById($item['user2']);
+                    $user1 = $this->userFactory->loadUserById($item['user1']);
+                    $user2 = $this->userFactory->loadUserById($item['user2']);
 
                     $v = $this->fillCalCell($user1->name, $user2->name, $resType);
                 } else {
@@ -203,11 +206,11 @@ class ModTennisHelper
 
     public function showSelPlayer($weekday, $hour)
     {
-        $session = Factory->getContainer()->get(SessionInterface::class);
-        $app = Factory::getContainer()->get(CMSApplicationInterface::class);
+        $app = Factory::getApplication();
+	$session = $app->getSession();
         $user = $app->getIdentity();
 
-        $date = new DateTime('now', timezone_open('Europe/Zurich'));
+        $date = new Date('now', new \DateTimeZonenew('Europe/Zurich'));
         $inc = $weekday + $session->get('date');
         $date->modify($inc.' days');
         $date->setTime($hour, 0, 0);
@@ -248,18 +251,18 @@ class ModTennisHelper
         return $str;
     }
 
-    public function checkUserBusy(&$db, &$query, $user)
+    public function checkUserBusy(&$query, $user)
     {
         # No limitation for invite
-        $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
-        $u = $userFactory->loadUserById($user);
+        $u = $this->userFactory->loadUserById($user);
 
         if ($u->username == "invite")
             return false;
 
-        $today = new DateTime('now', timezone_open('Europe/Zurich'));
+        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
         $today->modify(- $this->params->get('delay') .' minutes');
 
+	$db = $this->db;
         $query->select($db->quoteName('date'))
               ->from($db->quoteName('#__reservation'))
               ->where("(".$db->quoteName('user1')."=".$db->quote($user)." or " .
@@ -280,10 +283,10 @@ class ModTennisHelper
 
     public function resInsert($user1, $user2, $date, $type)
     {
-        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $db = $this->db;
         $query = $db->getQuery(true);
 
-        $now = new DateTime('now', timezone_open('Europe/Zurich'));
+        $now = new Date('now', new \DateTimeZone('Europe/Zurich'));
 
         $value = implode(',', array($db->quote($user1), $db->quote($user2),
         $db->quote($date), $db->quote($type), $db->quote($now->format('Y-m-d H:i:s'))));
@@ -302,7 +305,7 @@ class ModTennisHelper
 
     public function resUpdate($user1, $user2, $date, $type)
     {
-        $db = Factory::getContainer()->get(DatabaseInterface::class);
+        $db = $this->db;
         $query = $db->getQuery(true);
 
         $query->delete($db->quoteName('#__reservation'));
@@ -310,7 +313,43 @@ class ModTennisHelper
         if (is_null($date)) {
             if (is_null($userId)) {
                 /* delete all opened reservation early than (now - timeout) */
-                $date = new DateTime('now', timezone_open('Europe/Zurich'));
+                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
+                $date->modify(- $this->params->get('timeout').' minutes');
+
+                $query->where(array(
+                    $db->quoteName('insertDate').'<'.$db->quote($date->format('Y-m-d H:i:s')),
+                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
+                ));
+            } else
+                /* delete only opened reservation for the given user */
+                $query->where(array(
+                    $db->quoteName('user1').'='.$db->quote($userId),
+                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
+                ));
+        } else
+            /* delete the given reservation */
+            $query->where($db->quoteName('date').'='.$db->quote($date));
+
+        try {
+            $db->setQuery($query);
+            $db->query();
+        } catch(Exception $e) {
+            return ERR_INTERNAL;
+        }
+        return 0;
+    }
+
+    public function resDelete($userId, $date)
+    {
+        $db = $this->db;
+        $query = $db->getQuery(true);
+
+        $query->delete($db->quoteName('#__reservation'));
+
+        if (is_null($date)) {
+            if (is_null($userId)) {
+                /* delete all opened reservation early than (now - timeout) */
+                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
                 $date->modify(- $this->params->get('timeout').' minutes');
 
                 $query->where(array(
@@ -367,6 +406,7 @@ class ModTennisHelper
      */
     public function getAjax()
     {
+    
         $input  = Factory::getApplication()->getInput();
 
         $cmd = $input->get('cmd');
@@ -376,7 +416,7 @@ class ModTennisHelper
         if ($cmd == 'getStrings')
             return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
 
-        $app = Factory::getContainer()->get(CMSApplicationInterface::class);
+        $app = Factory::getApplication();
         $user = $app->getIdentity();
 
         if ($user->guest)
@@ -384,7 +424,7 @@ class ModTennisHelper
         if ($user->block)
             return ERR_INVAL;
 
-        $session = Factory->getContainer()->get(SessionInterface::class);
+        $session = Factory::getApplication()->getSession();
         $usersName = $session->get('usersName');
 
         if ($session->get('userId') != $user->id) {
@@ -405,7 +445,7 @@ class ModTennisHelper
             } else {
                 $inc = $session->get('date') + $input->get('date');
 
-                $date = new DateTime('now', timezone_open('Europe/Zurich'));
+                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
                 $date->modify($inc."day");
                 $date->setTime($input->get('hour'), 0, 0);
                 $d = $date->format('Y-m-d H:i:s');
@@ -420,7 +460,7 @@ class ModTennisHelper
             $grp = $user->group_id;
 
             /* check day/hour status */
-            $db = Factory::getContainer()->get(DatabaseInterface::class);
+	    $db = $this->db;
             $query = $db->getQuery(true);
             $query->select($db->quoteName(array('user1','user2','type')))
                   ->from($db->quoteName('#__reservation'))
@@ -451,9 +491,8 @@ class ModTennisHelper
                     if ($id1 == $id2)
                         return ERR_SAMEUSER;
 
-                    $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
-                    $user1 = $userFactory->loadUserById($id1);
-                    $user2 = $userFactory->loadUserById($id2);
+                    $user1 = $this->userFactory->loadUserById($id1);
+                    $user2 = $this->userFactory->loadUserById($id2);
 
                     if (!$manager) {
                         if (is_null($grp)) {
@@ -492,9 +531,8 @@ class ModTennisHelper
                     if ($result[2] >= RES_TYPE_COURS)
                         return ERR_BUSY;
 
-                    $userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
-                    $user1 = $userFactory->loadUserById($result[0]);
-                    $user2 = $userFactory->loadUserById($result[1]);
+                    $user1 = $this->userFactory->loadUserById($result[0]);
+                    $user2 = $this->userFactory->loadUserById($result[1]);
 
                     /* manager can reserve for any user */
                     if (!$manager && ($user1->group_id != $grp) && ($user2->group_id != $grp))
