@@ -11,6 +11,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Date\Date;
 use DateInterval;
 use DatePeriod;
+use DateTimeZone;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\Registry\Registry;
@@ -20,6 +21,12 @@ require_once dirname(__FILE__) . '/const.php';
 const hourWidth = 50; /* pixel */
 const cellWidth = 100; /* pixel */
 
+function getCaller()
+{   
+    $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+    return $trace[2]['function'] ?? null;
+}
+    
 class TennisHelper
 {
     private $params;
@@ -33,24 +40,40 @@ class TennisHelper
         $this->params = new Registry($module->params);
 
         $this->db = Factory::getContainer()->get(DatabaseInterface::class);
-	$this->userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
+        $this->userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
 
-	Log::add('ModTennisHelper construct');
+        $this->tz = new DateTimeZone('Europe/Zurich');
+        $this->usesName = NULL;
     }
 
-    public function getWeekReservation($date)
+    function setQuery(&$query)
+    {
+        Log::add(getCaller() . $query);
+        $this->db->setQuery($query);
+    }
+
+    function getDate($inc, $hour = NULL)
+    {
+        $date = new Date('now', $this->tz);
+        $date->modify($inc.' days');
+        if ($hour != NULL)
+            $date->setTime($hour, 0, 0);
+        return $date;
+    }
+
+    function getWeekReservation($date)
     {
         /* delete any pending reservation first */
-        //$ret = $this->resDelete(null, null);
-        //if ($ret)
-        //    return $ret;
+        $ret = $this->resDelete(null, null);
+        if ($ret)
+           return $ret;
 
         /* get now all reservation of the week */
         $start = $date->format('Y-m-d');
         $date->modify("+7 days");
         $end = $date->format('Y-m-d');
 
-	$db = $this->db;
+        $db = $this->db;
         $query= $db->getQuery(true);
 
         $query->select($db->quoteName(array('id', 'user1', 'user2', 'date', 'type')))
@@ -59,11 +82,11 @@ class TennisHelper
               ->where($db->quoteName('date').' >= '.$db->quote($start).' and '.
                  $db->quoteName('date').' <= '.$db->quote($end));
 
-        $db->setQuery($query);
+        $this->setQuery($query);
         return $db->loadAssocList('date');
     }
 
-    public function loadUsersName()
+    function loadUsersName()
     {
     	$db = $this->db;
         $query = $db->getQuery(true);
@@ -71,20 +94,19 @@ class TennisHelper
         $query->select($db->quoteName(array('id', 'username')))
               ->from($db->quoteName('#__users'))
               ->order($db->quoteName('name').' ASC');
-        $db->setQuery($query);
 
+        $this->setQuery($query);
         return $db->loadAssocList('id', 'username');
     }
 
-    public function buildCalHeader()
+    function buildCalHeader()
     {
         $app = Factory::getApplication();
         $user = $app->getIdentity();
-        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
+        $today = new Date('now', $this->tz);
 
         # to fill cal-header division
-        $str = "<p>Bonjour ".$user->name.", il est ".$today->format('G:i').". " .
-            "Si vous souhaitez réserver une plage horaire, veuillez simplement " .
+        $str = "Pour réserver une plage horaire, veuillez simplement " .
             "sélectionner la case correspondante à l'heure et la date souhaitées.</p>".
             "<p>Pour annuler une réservation, il suffit de resélectionner votre case.</p>";
 
@@ -110,7 +132,7 @@ class TennisHelper
         return $str;
     }
 
-    public function fillCalCell($name1, $name2, $type)
+    function fillCalCell(&$name1, &$name2, &$type)
     {
         if ($type < RES_TYPE_COURS)
             $v = $name1 .'<br>'.$name2;
@@ -121,7 +143,7 @@ class TennisHelper
         return $v;
     }
 
-    public function buildCalendar($cmd, $width)
+    function buildCalendar($cmd, $width)
     {
         # to fill calendar division
         $w = $width - (hourWidth);
@@ -134,6 +156,7 @@ class TennisHelper
         $session = Factory::getApplication()->getSession();
         $inc = $session->get('date', 0);
         Log::add('session date ' . $inc);
+
         if ($cmd == 'prevCal')
             $inc -= $num;
         else if ($cmd == 'nextCal')
@@ -144,10 +167,8 @@ class TennisHelper
         else
             $session->set('date', $inc);
 
-        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
-        $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
-	Log::add($inc.' days');
-        $date->modify($inc.' days');
+        $today = new Date('now', $this->tz);
+        $date = $this->getDate($inc);
 
         $app = Factory::getApplication();
         $user = $app->getIdentity();
@@ -162,7 +183,7 @@ class TennisHelper
         $d = [];
         for ($i = 0; $i < $num; $i++) {
             $d[$i] = clone $date;
-            $d[$i]->modify($i."day");
+            $d[$i]->modify($i." day");
             $str .= '<td class="day-head">'.$d[$i]->format("l") .
                 '<br>'.$d[$i]->format('j M').'</td>';
         }
@@ -182,7 +203,8 @@ class TennisHelper
                 if ($item) {
                     $resType = $item["type"];
                     $user1 = $this->userFactory->loadUserById($item['user1']);
-                    $user2 = $this->userFactory->loadUserById($item['user2']);
+                    $user2 = $item['user2'];
+                    $user2 = ($user2 == NULL) ? NULL : $this->userFactory->loadUserById($user2);
 
                     $v = $this->fillCalCell($user1->name, $user2->name, $resType);
                 } else {
@@ -204,18 +226,15 @@ class TennisHelper
         return $str;
     }
 
-    public function showSelPlayer($weekday, $hour)
+    function showSelPlayer(&$weekday, &$hour)
     {
         $app = Factory::getApplication();
-	$session = $app->getSession();
+        $session = $app->getSession();
         $user = $app->getIdentity();
+        $date = $this->getDate($weekday + $session->get('date'), $hour);
 
-        $date = new Date('now', new \DateTimeZonenew('Europe/Zurich'));
-        $inc = $weekday + $session->get('date');
-        $date->modify($inc.' days');
-        $date->setTime($hour, 0, 0);
+        Log::add('showSelPlayer inc ' . $inc . ' date ' . $date);
 
-        /* save userGroup into user1 field */
         $ret = $this->resInsert($user->id, NULL, $date->format('Y-m-d H:i:s'), RES_TYPE_OPENED);
         if ($ret)
             return $ret;
@@ -251,7 +270,7 @@ class TennisHelper
         return $str;
     }
 
-    public function checkUserBusy(&$query, $user)
+    function checkUserBusy($user)
     {
         # No limitation for invite
         $u = $this->userFactory->loadUserById($user);
@@ -259,20 +278,21 @@ class TennisHelper
         if ($u->username == "invite")
             return false;
 
-        $today = new Date('now', new \DateTimeZone('Europe/Zurich'));
+        $today = new Date('now', $this->tz);
         $today->modify(- $this->params->get('delay') .' minutes');
 
-	$db = $this->db;
+        $db = $this->db;
+        $query = $db->getQuery(true);
+ 
         $query->select($db->quoteName('date'))
-              ->from($db->quoteName('#__reservation'))
-              ->where("(".$db->quoteName('user1')."=".$db->quote($user)." or " .
-              $db->quoteName('user2')."=".$db->quote($user) .") and " .
-              $db->quoteName('date').">=".$db->quote($today->format('Y-m-d H:i:00')) .
-              " and ".$db->quoteName('type')."<".$db->quote(RES_TYPE_COURS));
-
+            ->from($db->quoteName('#__reservation'))
+            ->where("(".$db->quoteName('user1')."=".$db->quote($user)." or " .
+                    $db->quoteName('user2')."=".$db->quote($user) .") and " .
+                    $db->quoteName('date').">=".$db->quote($today->format('Y-m-d H:i:00')) .
+                    " and ".$db->quoteName('type')."<".$db->quote(RES_TYPE_COURS));
         try {
-            $db->setQuery($query);
-            $result = $db->query();
+            $this->setQuery($query);
+            $result = $db->loadObjectList();
         } catch(Exception $e) {
             return ERR_INTERNAL;
         }
@@ -281,29 +301,59 @@ class TennisHelper
         return $result->num_rows >= $this->params->get('max_reserv');
     }
 
-    public function resInsert($user1, $user2, $date, $type)
+    function resInsert($user1, $user2, $date, $type)
     {
         $db = $this->db;
         $query = $db->getQuery(true);
 
-        $now = new Date('now', new \DateTimeZone('Europe/Zurich'));
+        $now = new Date('now', $this->tz);
 
-        $value = implode(',', array($db->quote($user1), $db->quote($user2),
-        $db->quote($date), $db->quote($type), $db->quote($now->format('Y-m-d H:i:s'))));
+        Log::add('resInsert now ' . $now . ' user1 ' . $user1 . ' user2 ' . $user2);
+
+        $value = implode(',', array($db->quote($user1), ($user2 == NULL) ? 'NULL' : $db->quote($user2),
+            $db->quote($date), $db->quote($type), $db->quote($now->format('Y-m-d H:i:s'))));
 
         $query->insert($db->quoteName('#__reservation'))
               ->columns($db->quoteName(array('user1', 'user2', 'date', 'type', 'insertDate')))
               ->values($value);
         try {
-            $db->setQuery($query);
-            $db->query();
+            $this->setQuery($query);
+            $db->execute();
         } catch(Exception $e) {
             return ERR_INTERNAL;
         }
         return 0;
     }
 
-    public function resUpdate($user1, $user2, $date, $type)
+    function resUpdate($user1, $user2, $date, $type)
+    {
+         if ($type < RES_TYPE_COURS) {
+            if ($this->checkUserBusy($user1))
+                return ERR_USER1_BUSY;
+            if ($this->checkUserBusy($user2))
+                return ERR_USER2_BUSY;
+        }
+
+        $db = $this->db;
+        $values = array(
+            $db->quoteName('user1').'='.$db->quote($user1),
+            $db->quoteName('user2').'='.$db->quote($user2),
+            $db->quoteName('type').'='.$db->quote($type));
+
+        $query = $db->getQuery(true);
+        $query->update($db->quoteName('#__reservation'))
+              ->set($values)
+              ->where($db->quoteName('date').'='.$db->quote($date));
+        try {
+            $this->setQuery($query);
+            $db->execute();
+        } catch(Exception $e) {
+            return ERR_INTERNAL;
+        }
+        return 0;
+    }
+
+    function resDelete($userId, $date)
     {
         $db = $this->db;
         $query = $db->getQuery(true);
@@ -313,7 +363,7 @@ class TennisHelper
         if (is_null($date)) {
             if (is_null($userId)) {
                 /* delete all opened reservation early than (now - timeout) */
-                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
+                $date = new Date('now', $this->tz);
                 $date->modify(- $this->params->get('timeout').' minutes');
 
                 $query->where(array(
@@ -331,48 +381,110 @@ class TennisHelper
             $query->where($db->quoteName('date').'='.$db->quote($date));
 
         try {
-            $db->setQuery($query);
-            $db->query();
+            $this->setQuery($query);
+            $db->execute();
         } catch(Exception $e) {
             return ERR_INTERNAL;
         }
         return 0;
     }
 
-    public function resDelete($userId, $date)
+    function reserve(&$user, &$user1, &$user2, &$resType, &$d)
     {
+        $manager = in_array(GRP_MANAGER, $user->get('groups'));
+        
+        /* check day/hour status */
         $db = $this->db;
         $query = $db->getQuery(true);
+        $query->select($db->quoteName(array('user1','user2','type')))
+              ->from($db->quoteName('#__reservation'))
+              ->where($db->quoteName('date').'='.$db->quote($d));
 
-        $query->delete($db->quoteName('#__reservation'));
+        $this->setQuery($query);
+        $result = $db->loadRow();
 
-        if (is_null($date)) {
-            if (is_null($userId)) {
-                /* delete all opened reservation early than (now - timeout) */
-                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
-                $date->modify(- $this->params->get('timeout').' minutes');
+        if (is_null($result) && $resType < RES_TYPE_COURS)
+            return ERR_TIMEOUT;
 
-                $query->where(array(
-                    $db->quoteName('insertDate').'<'.$db->quote($date->format('Y-m-d H:i:s')),
-                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
-                ));
-            } else
-                /* delete only opened reservation for the given user */
-                $query->where(array(
-                    $db->quoteName('user1').'='.$db->quote($userId),
-                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
-                ));
-        } else
-            /* delete the given reservation */
-            $query->where($db->quoteName('date').'='.$db->quote($date));
+        Log::add('reserve user1 ' . $user1 . ' user2 ' . $user2 . ' current ' . json_encode($result));
 
-        try {
-            $db->setQuery($query);
-            $db->query();
-        } catch(Exception $e) {
-            return ERR_INTERNAL;
+        if ($result[2] == RES_TYPE_OPENED) {
+            /* reservation pre-reserved, check if it is by the same user */
+            if ($result[0] != $user->id)
+                return ERR_BUSY;
+
+            if ($resType < RES_TYPE_COURS) {
+                /* check both players */
+                $p = strtolower($user1);
+                $id1 = array_search($p, $this->usersName);
+                if ($id1 == false)
+                    return ERR_USER1_INVAL;
+
+                $p = strtolower($user2);
+                $id2 = array_search($p, $this->usersName);
+                if ($id2 == false)
+                    return ERR_USER2_INVAL;
+
+                if ($id1 == $id2)
+                    return ERR_SAMEUSER;
+
+                $user1 = $this->userFactory->loadUserById($id1);
+                $user2 = $this->userFactory->loadUserById($id2);
+		    
+                if (!$manager) {
+                    if ($id1 != $user->id && $id2 != $user->id)
+                        return ERR_NOT_ALLOWED;
+                }
+
+                if ($user1->block)
+                    return ERR_USER1_DISABLED;
+                if ($user2->block)
+                    return ERR_USER2_DISABLED;
+
+                $v = $this->fillCalCell($user1->name, $user2->name, $resType);
+
+            } else {
+                $id1 = $user->id;
+                $id2 = NULL;
+                $v = RES_TYPE[$resType];
+            }
+            $ret = $this->resUpdate($id1, $id2, $d, $resType);
+            if ($ret)
+                return $ret;
+
+        } else {
+            /* rejected if already reserved by another user */
+
+            if ($resType < RES_TYPE_COURS) {
+
+                /* normal reservation can't override cours/manif reservation */
+                if ($result[2] >= RES_TYPE_COURS)
+                    return ERR_BUSY;
+
+                $user1 = $this->userFactory->loadUserById($result[0]);
+                $user2 = $this->userFactory->loadUserById($result[1]);
+
+            } else {
+                /* only admin can set cours and manif */
+                if (!$manager)
+                    return ERR_BUSY;
+            }
+
+            /* send an email if normal reservation replaced by cours ? */
+
+            $ret = $this->resDelete(NULL, $d);
+            if ($ret)
+                return $ret;
+            $v = '';
+
+            if ($resType >= RES_TYPE_COURS && $result[2] != $resType) {
+                $ret = $this->resInsert($user->id, NULL, $d, $resType);
+                if ($ret)
+                    return $ret;
+                $v = RES_TYPE[$resType];
+            }
         }
-        return 0;
+        return $v;
     }
 
     /* List of Ajax commands:
@@ -406,160 +518,45 @@ class TennisHelper
      */
     public function getAjax()
     {
-    
-        $input  = Factory::getApplication()->getInput();
-
-        $cmd = $input->get('cmd');
-        if (is_null($cmd))
-            return ERR_INVAL;
-
-        if ($cmd == 'getStrings')
-            return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
-
         $app = Factory::getApplication();
-        $user = $app->getIdentity();
 
+        $user = $app->getIdentity();
         if ($user->guest)
             return ERR_GUEST;
         if ($user->block)
             return ERR_INVAL;
 
-        $session = Factory::getApplication()->getSession();
-        $usersName = $session->get('usersName');
-
+        $session = $app->getSession();
         if ($session->get('userId') != $user->id) {
             # if user change then reload details */
-            $usersName = NULL;
+            $this->usersName = NULL;
             $session->set('userId', $user->id);
         }
-
-        if ($usersName == NULL) {
-            $usersName = $this->loadUsersName();
-            $session->set('usersName', $usersName);
+        if ($this->usersName == NULL) {
+            $this->usersName = $this->loadUsersName();
         }
 
-        if ($cmd == 'reserve' or $cmd == 'free') {
+        $input  = $app->getInput();
+        $cmd = $input->get('cmd');
+        if (is_null($cmd))
+            return ERR_INVAL;
+
+        switch ($cmd) {
+        case NULL:
+            return ERR_INVAL;
+
+        case 'reserve':
 
             if (is_null($input->get('date')) or is_null($input->get('hour'))) {
                 $d = NULL;
             } else {
-                $inc = $session->get('date') + $input->get('date');
-
-                $date = new Date('now', new \DateTimeZone('Europe/Zurich'));
-                $date->modify($inc."day");
-                $date->setTime($input->get('hour'), 0, 0);
+                $date = $this->getDate($session->get('date') + $input->get('date'),
+                                       $input->get('hour'));
                 $d = $date->format('Y-m-d H:i:s');
             }
-        }
-
-        switch ($cmd) {
-        case 'reserve':
-
-            $manager = in_array(GRP_MANAGER, $user->get('groups'));
-            $resType = $input->get('resType');
-            $grp = $user->group_id;
-
-            /* check day/hour status */
-	    $db = $this->db;
-            $query = $db->getQuery(true);
-            $query->select($db->quoteName(array('user1','user2','type')))
-                  ->from($db->quoteName('#__reservation'))
-                  ->where($db->quoteName('date').'='.$db->quote($d));
-            $db->setQuery($query);
-            $result = $db->loadRow();
-
-            if (is_null($result) && $resType < RES_TYPE_COURS)
-                return ERR_TIMEOUT;
-
-            if ($result[2] == RES_TYPE_OPENED) {
-
-                if ($result[0] != $user->id)
-                    return ERR_BUSY;
-
-                if ($resType < RES_TYPE_COURS) {
-                    /* check both players */
-                    $p = strtolower($input->get('player1'));
-                    $id1 = array_search($p, $usersName);
-                    if ($id1 == false)
-                        return ERR_USER1_INVAL;
-
-                    $p = strtolower($input->get('player2'));
-                    $id2 = array_search($p, $usersName);
-                    if ($id2 == false)
-                        return ERR_USER2_INVAL;
-
-                    if ($id1 == $id2)
-                        return ERR_SAMEUSER;
-
-                    $user1 = $this->userFactory->loadUserById($id1);
-                    $user2 = $this->userFactory->loadUserById($id2);
-
-                    if (!$manager) {
-                        if (is_null($grp)) {
-                            /* user not in a group */
-                            if ($id1 != $user->id && $id2 != $user->id)
-                                return ERR_NOT_ALLOWED;
-                        } else {
-                            /* at least one user must be in the group of the current user */
-                            if ($user1->group_id != $grp && $user2->group_id != $grp)
-                                return ERR_NOT_ALLOWED;
-                        }
-                    }
-
-                    if ($user1->block)
-                        return ERR_USER1_DISABLED;
-                    if ($user2->block)
-                        return ERR_USER2_DISABLED;
-
-                    $v = $this->fillCalCell($user1->name, $user2->name, $resType);
-
-                } else {
-                    $id1 = $user->id;
-                    $id2 = NULL;
-                    $v = RES_TYPE[$resType];
-                }
-                $ret = $this->resUpdate($id1, $id2, $d, $resType);
-                if ($ret)
-                    return $ret;
-
-            } else {
-                /* rejected if already reserved by another user */
-
-                if ($resType < RES_TYPE_COURS) {
-
-                    /* normal reservation can't override cours/manif reservation */
-                    if ($result[2] >= RES_TYPE_COURS)
-                        return ERR_BUSY;
-
-                    $user1 = $this->userFactory->loadUserById($result[0]);
-                    $user2 = $this->userFactory->loadUserById($result[1]);
-
-                    /* manager can reserve for any user */
-                    if (!$manager && ($user1->group_id != $grp) && ($user2->group_id != $grp))
-                        return ERR_BUSY;
-
-                } else {
-                    /* only admin can set cours and manif */
-                    if (!$manager)
-                        return ERR_BUSY;
-                }
-
-                /* send an email if normal reservation replaced by cours ? */
-
-                $ret = $this->resDelete(NULL, $d);
-                if ($ret)
-                    return $ret;
-                $v = '';
-
-                if ($resType >= RES_TYPE_COURS && $result[2] != $resType) {
-                    $ret = $this->resInsert($user->id, NULL, $d, $resType);
-                    if ($ret)
-                        return $ret;
-                    $v = RES_TYPE[$resType];
-                }
-            }
-
-            return $v; /* cell content */
+            
+            return $this->reserve($user, $input->get('player1'), $input->get('player2'),
+                                  $input->get('resType'), $d);
 
         case 'reserveCancel':
             return $this->resDelete($user->id, NULL);
@@ -574,9 +571,12 @@ class TennisHelper
 
         case 'getUsersName':
             $a = array();
-            foreach ($usersName as $id => $d)
+            foreach ($this->usersName as $id => $d)
                 array_push($a, $d);
             return $a;
+
+        case 'getStrings':
+            return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
 
         case 'selPlayer':
             return $this->showSelPlayer($input->get('date'), $input->get('hour'));
@@ -585,6 +585,6 @@ class TennisHelper
             return ERR_INTERNAL;
         }
     }
-    }
+}
 
 ?>

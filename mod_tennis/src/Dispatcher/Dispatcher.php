@@ -46,6 +46,16 @@ class Dispatcher implements DispatcherInterface, HelperFactoryAwareInterface
 
         $params = new Registry($this->module->params);
 
-        require ModuleHelper::getLayoutPath('mod_tennis', $params->get('layout', 'default'));
+	$user = Factory::getApplication()->getIdentity();
+	$loggedIn = !$user->guest;
+
+	$wa->addInlineScript('window.JoomlaUser =
+	  { loggedIn: ' . ($loggedIn ? 'true' : 'false') . ' };',
+    	  [],
+          ['type' => 'application/javascript']
+        );
+	
+        require ModuleHelper::getLayoutPath(
+	  'mod_tennis', $params->get('layout', 'default'));
     }
 }
