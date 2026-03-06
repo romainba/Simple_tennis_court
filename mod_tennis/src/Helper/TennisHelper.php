@@ -32,6 +32,9 @@ class TennisHelper
     private $params;
     private $db;
     private $userFactory;
+    private $usersName;
+    private $session;
+    private $user;
 
     function __construct()
     {
@@ -43,7 +46,14 @@ class TennisHelper
         $this->userFactory = Factory::getContainer()->get(UserFactoryInterface::class);
 
         $this->tz = new DateTimeZone('Europe/Zurich');
-        $this->usesName = NULL;
+
+        $app = Factory::getApplication();
+        $this->session = $app->getSession();
+        $this->user = $app->getIdentity();
+
+        if ($this->session->get('usersName') == NULL)
+            $this->session->set('usersName', $this->loadUsersName());
+        $this->usersName = $this->session->get('usersName');
     }
 
     function setQuery(&$query)
@@ -91,8 +101,10 @@ class TennisHelper
     	$db = $this->db;
         $query = $db->getQuery(true);
 
+        /* get not blocked players */
         $query->select($db->quoteName(array('id', 'username')))
               ->from($db->quoteName('#__users'))
+              ->where($db->quoteName('block')."=".$db->quote(0))
               ->order($db->quoteName('name').' ASC');
 
         $this->setQuery($query);
@@ -101,33 +113,29 @@ class TennisHelper
 
     function buildCalHeader()
     {
-        $app = Factory::getApplication();
-        $user = $app->getIdentity();
-        $today = new Date('now', $this->tz);
-
         # to fill cal-header division
-        $str = "Pour réserver une plage horaire, veuillez simplement " .
+        $str = "Pour réserver une plage horaire, veuille " .
             "sélectionner la case correspondante à l'heure et la date souhaitées.</p>".
             "<p>Pour annuler une réservation, il suffit de resélectionner votre case.</p>";
-
-        $str .= '<table class="calendar_header">';
-        $str .= '<tr><td style="width: 10%"><input type="submit" class="weekBtn" ' .
-            'value="< avant" id="prevCal"/></td>';
-        $str .= '<td style="width: 80%;text-align:center">';
+        $str .= '<div class="calendar_header">';
+        $str .= '<input type="submit" class="weekBtn" ' .
+            'value="< avant" id="prevCal"/>';
+        $str .= '<div class="center">';
 
         # comitee members
-        if (in_array(GRP_MANAGER, $user->get('groups'))) {
-            $str .= 'type de réservation <select id="resTypeList">';
+        if (in_array(GRP_MANAGER, $this->user->get('groups'))) {
+            $str .= '<span>type de réservation</span>' .
+                '<select id="resTypeList">';
             for ($i = 1; $i <= RES_TYPE_MANIF; $i++)
                 $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
-        $str .= '</td>';
+        $str .= '</div>';
 
-        $str .= '<td style="width: 10%;"><input type="submit" class="weekBtn" ' .
-            'value="apres >" id="nextCal"/></td>';
+        $str .= '<input type="submit" class="weekBtn" ' .
+            'value="apres >" id="nextCal"/>';
 
-	    $str .= '</tr></table>';
+	    $str .= '</div>';
 
         return $str;
     }
@@ -153,8 +161,7 @@ class TennisHelper
         $cell_width = (($w / $num) >> 0) + 1;
         $cell_width = $cell_width * 100 / $width;
 
-        $session = Factory::getApplication()->getSession();
-        $inc = $session->get('date', 0);
+        $inc = $this->session->get('date', 0);
         Log::add('session date ' . $inc);
 
         if ($cmd == 'prevCal')
@@ -163,15 +170,12 @@ class TennisHelper
             $inc += $num;
 
         if ($cmd == 'currCal')
-            $session->set('width', $width);
+            $this->session->set('width', $width);
         else
-            $session->set('date', $inc);
+            $this->session->set('date', $inc);
 
         $today = new Date('now', $this->tz);
         $date = $this->getDate($inc);
-
-        $app = Factory::getApplication();
-        $user = $app->getIdentity();
 
         $begin = $this->params->get('start_hour');
         $end = $this->params->get('end_hour');
@@ -204,9 +208,12 @@ class TennisHelper
                     $resType = $item["type"];
                     $user1 = $this->userFactory->loadUserById($item['user1']);
                     $user2 = $item['user2'];
-                    $user2 = ($user2 == NULL) ? NULL : $this->userFactory->loadUserById($user2);
+                    if ($user2 == NULL)
+                        $user2name = '';
+                    else
+                        $user2name = $this->userFactory->loadUserById($user2)->name;
 
-                    $v = $this->fillCalCell($user1->name, $user2->name, $resType);
+                    $v = $this->fillCalCell($user1->name, $user2name, $resType);
                 } else {
                     $resType = RES_TYPE_NONE;
                     $v = '';
@@ -228,14 +235,12 @@ class TennisHelper
 
     function showSelPlayer(&$weekday, &$hour)
     {
-        $app = Factory::getApplication();
-        $session = $app->getSession();
-        $user = $app->getIdentity();
-        $date = $this->getDate($weekday + $session->get('date'), $hour);
+        $date = $this->getDate($weekday + $this->session->get('date'), $hour);
 
         Log::add('showSelPlayer inc ' . $inc . ' date ' . $date);
 
-        $ret = $this->resInsert($user->id, NULL, $date->format('Y-m-d H:i:s'), RES_TYPE_OPENED);
+        $ret = $this->resInsert(
+            $this->user->id, NULL, $date->format('Y-m-d H:i:s'), RES_TYPE_OPENED);
         if ($ret)
             return $ret;
 
@@ -253,7 +258,7 @@ class TennisHelper
             '<div style="clear:both;padding:5px;">'.
             '<div style="float:left;margin-right:3px;margin-top:5px;">Joueur 1</div>'.
             '<input list="userlist" class="player" id="player1"'.
-            'value ="'.$user->username.'"/>'.
+            'value ="'.$this->user->username.'"/>'.
             '</div>'.
 
             '<div style="clear:both;padding:5px;">'.
@@ -389,9 +394,9 @@ class TennisHelper
         return 0;
     }
 
-    function reserve(&$user, &$user1, &$user2, &$resType, &$d)
+    function reserve($user1, $user2, $resType, $d)
     {
-        $manager = in_array(GRP_MANAGER, $user->get('groups'));
+        $manager = in_array(GRP_MANAGER, $this->user->get('groups'));
         
         /* check day/hour status */
         $db = $this->db;
@@ -410,7 +415,7 @@ class TennisHelper
 
         if ($result[2] == RES_TYPE_OPENED) {
             /* reservation pre-reserved, check if it is by the same user */
-            if ($result[0] != $user->id)
+            if ($result[0] != $this->user->id)
                 return ERR_BUSY;
 
             if ($resType < RES_TYPE_COURS) {
@@ -432,7 +437,7 @@ class TennisHelper
                 $user2 = $this->userFactory->loadUserById($id2);
 		    
                 if (!$manager) {
-                    if ($id1 != $user->id && $id2 != $user->id)
+                    if ($id1 != $this->user->id && $id2 != $this->user->id)
                         return ERR_NOT_ALLOWED;
                 }
 
@@ -444,7 +449,7 @@ class TennisHelper
                 $v = $this->fillCalCell($user1->name, $user2->name, $resType);
 
             } else {
-                $id1 = $user->id;
+                $id1 = $this->user->id;
                 $id2 = NULL;
                 $v = RES_TYPE[$resType];
             }
@@ -461,8 +466,8 @@ class TennisHelper
                 if ($result[2] >= RES_TYPE_COURS)
                     return ERR_BUSY;
 
-                $user1 = $this->userFactory->loadUserById($result[0]);
-                $user2 = $this->userFactory->loadUserById($result[1]);
+                //$user1 = $this->userFactory->loadUserById($result[0]);
+                //$user2 = $this->userFactory->loadUserById($result[1]);
 
             } else {
                 /* only admin can set cours and manif */
@@ -478,7 +483,7 @@ class TennisHelper
             $v = '';
 
             if ($resType >= RES_TYPE_COURS && $result[2] != $resType) {
-                $ret = $this->resInsert($user->id, NULL, $d, $resType);
+                $ret = $this->resInsert($this->user->id, NULL, $d, $resType);
                 if ($ret)
                     return $ret;
                 $v = RES_TYPE[$resType];
@@ -518,25 +523,18 @@ class TennisHelper
      */
     public function getAjax()
     {
-        $app = Factory::getApplication();
-
-        $user = $app->getIdentity();
-        if ($user->guest)
+        if ($this->user->guest)
             return ERR_GUEST;
-        if ($user->block)
+        if ($this->user->block)
             return ERR_INVAL;
 
-        $session = $app->getSession();
-        if ($session->get('userId') != $user->id) {
+        if ($this->session->get('userId') != $this->user->id) {
             # if user change then reload details */
             $this->usersName = NULL;
-            $session->set('userId', $user->id);
-        }
-        if ($this->usersName == NULL) {
-            $this->usersName = $this->loadUsersName();
+            $this->session->set('userId', $this->user->id);
         }
 
-        $input  = $app->getInput();
+        $input  = Factory::getApplication()->getInput();
         $cmd = $input->get('cmd');
         if (is_null($cmd))
             return ERR_INVAL;
@@ -550,16 +548,16 @@ class TennisHelper
             if (is_null($input->get('date')) or is_null($input->get('hour'))) {
                 $d = NULL;
             } else {
-                $date = $this->getDate($session->get('date') + $input->get('date'),
+                $date = $this->getDate($this->session->get('date') + $input->get('date'),
                                        $input->get('hour'));
                 $d = $date->format('Y-m-d H:i:s');
             }
             
-            return $this->reserve($user, $input->get('player1'), $input->get('player2'),
+            return $this->reserve($input->get('player1'), $input->get('player2'),
                                   $input->get('resType'), $d);
 
         case 'reserveCancel':
-            return $this->resDelete($user->id, NULL);
+            return $this->resDelete($this->user->id, NULL);
 
         case 'prevCal':
         case 'nextCal':
