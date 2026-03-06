@@ -15,8 +15,7 @@ use DateTimeZone;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\Registry\Registry;
-
-require_once dirname(__FILE__) . '/const.php';
+use Joomla\Module\Tennis\Site\Helper\def;
 
 const hourWidth = 50; /* pixel */
 const cellWidth = 100; /* pixel */
@@ -123,11 +122,11 @@ class TennisHelper
         $str .= '<div class="center">';
 
         # comitee members
-        if (in_array(GRP_MANAGER, $this->user->get('groups'))) {
+        if (in_array(def::GRP_MANAGER, $this->user->get('groups'))) {
             $str .= '<span>type de réservation</span>' .
                 '<select id="resTypeList">';
-            for ($i = 1; $i <= RES_TYPE_MANIF; $i++)
-                $str .= "<option value=".$i.">".RES_TYPE[$i]."</option>";
+            for ($i = 1; $i <= def::RES_TYPE_MANIF; $i++)
+                $str .= "<option value=".$i.">".def::RES_TYPE[$i]."</option>";
             $str .= '</select>';
         }
         $str .= '</div>';
@@ -142,12 +141,12 @@ class TennisHelper
 
     function fillCalCell(&$name1, &$name2, &$type)
     {
-        if ($type < RES_TYPE_COURS)
+        if ($type < def::RES_TYPE_COURS)
             $v = $name1 .'<br>'.$name2;
-        else if ($type == RES_TYPE_OPENED)
+        else if ($type == def::RES_TYPE_OPENED)
             $v = 'Rés. en cours<br>'.$name1;
         else
-            $v = RES_TYPE[$type];
+            $v = def::RES_TYPE[$type];
         return $v;
     }
 
@@ -215,13 +214,13 @@ class TennisHelper
 
                     $v = $this->fillCalCell($user1->name, $user2name, $resType);
                 } else {
-                    $resType = RES_TYPE_NONE;
+                    $resType = def::RES_TYPE_NONE;
                     $v = '';
                 }
-                if ($d[$i] <= $today || $resType == RES_TYPE_OPENED)
+                if ($d[$i] <= $today || $resType == def::RES_TYPE_OPENED)
                     $str .= '<td class="day-past">';
                 else {
-                    $str .= '<td class="'.RES_TYPE_CLASS[$resType].'" id="cell_'.
+                    $str .= '<td class="'.def::RES_TYPE_CLASS[$resType].'" id="cell_'.
                         $i.'_'.$h.'" onclick="reserveDay('.$i.','.$h.')">';
                 }
                 $str .= $v.'</td>';
@@ -240,7 +239,7 @@ class TennisHelper
         Log::add('showSelPlayer inc ' . $inc . ' date ' . $date);
 
         $ret = $this->resInsert(
-            $this->user->id, NULL, $date->format('Y-m-d H:i:s'), RES_TYPE_OPENED);
+            $this->user->id, NULL, $date->format('Y-m-d H:i:s'), def::RES_TYPE_OPENED);
         if ($ret)
             return $ret;
 
@@ -294,12 +293,12 @@ class TennisHelper
             ->where("(".$db->quoteName('user1')."=".$db->quote($user)." or " .
                     $db->quoteName('user2')."=".$db->quote($user) .") and " .
                     $db->quoteName('date').">=".$db->quote($today->format('Y-m-d H:i:00')) .
-                    " and ".$db->quoteName('type')."<".$db->quote(RES_TYPE_COURS));
+                    " and ".$db->quoteName('type')."<".$db->quote(def::RES_TYPE_COURS));
         try {
             $this->setQuery($query);
             $result = $db->loadObjectList();
         } catch(Exception $e) {
-            return ERR_INTERNAL;
+            return def::ERR_INTERNAL;
         }
 
         $query->clear();
@@ -325,18 +324,18 @@ class TennisHelper
             $this->setQuery($query);
             $db->execute();
         } catch(Exception $e) {
-            return ERR_INTERNAL;
+            return def::ERR_INTERNAL;
         }
         return 0;
     }
 
     function resUpdate($user1, $user2, $date, $type)
     {
-         if ($type < RES_TYPE_COURS) {
+         if ($type < def::RES_TYPE_COURS) {
             if ($this->checkUserBusy($user1))
-                return ERR_USER1_BUSY;
+                return def::ERR_USER1_BUSY;
             if ($this->checkUserBusy($user2))
-                return ERR_USER2_BUSY;
+                return def::ERR_USER2_BUSY;
         }
 
         $db = $this->db;
@@ -353,7 +352,7 @@ class TennisHelper
             $this->setQuery($query);
             $db->execute();
         } catch(Exception $e) {
-            return ERR_INTERNAL;
+            return def::ERR_INTERNAL;
         }
         return 0;
     }
@@ -373,13 +372,13 @@ class TennisHelper
 
                 $query->where(array(
                     $db->quoteName('insertDate').'<'.$db->quote($date->format('Y-m-d H:i:s')),
-                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
+                    $db->quoteName('type').'='.$db->quote(def::RES_TYPE_OPENED)
                 ));
             } else
                 /* delete only opened reservation for the given user */
                 $query->where(array(
                     $db->quoteName('user1').'='.$db->quote($userId),
-                    $db->quoteName('type').'='.$db->quote(RES_TYPE_OPENED)
+                    $db->quoteName('type').'='.$db->quote(def::RES_TYPE_OPENED)
                 ));
         } else
             /* delete the given reservation */
@@ -389,14 +388,14 @@ class TennisHelper
             $this->setQuery($query);
             $db->execute();
         } catch(Exception $e) {
-            return ERR_INTERNAL;
+            return def::ERR_INTERNAL;
         }
         return 0;
     }
 
     function reserve($user1, $user2, $resType, $d)
     {
-        $manager = in_array(GRP_MANAGER, $this->user->get('groups'));
+        $manager = in_array(def::GRP_MANAGER, $this->user->get('groups'));
         
         /* check day/hour status */
         $db = $this->db;
@@ -408,50 +407,50 @@ class TennisHelper
         $this->setQuery($query);
         $result = $db->loadRow();
 
-        if (is_null($result) && $resType < RES_TYPE_COURS)
-            return ERR_TIMEOUT;
+        if (is_null($result) && $resType < def::RES_TYPE_COURS)
+            return def::ERR_TIMEOUT;
 
         Log::add('reserve user1 ' . $user1 . ' user2 ' . $user2 . ' current ' . json_encode($result));
 
-        if ($result[2] == RES_TYPE_OPENED) {
+        if ($result[2] == def::RES_TYPE_OPENED) {
             /* reservation pre-reserved, check if it is by the same user */
             if ($result[0] != $this->user->id)
-                return ERR_BUSY;
+                return def::ERR_BUSY;
 
-            if ($resType < RES_TYPE_COURS) {
+            if ($resType < def::RES_TYPE_COURS) {
                 /* check both players */
                 $p = strtolower($user1);
                 $id1 = array_search($p, $this->usersName);
                 if ($id1 == false)
-                    return ERR_USER1_INVAL;
+                    return def::ERR_USER1_INVAL;
 
                 $p = strtolower($user2);
                 $id2 = array_search($p, $this->usersName);
                 if ($id2 == false)
-                    return ERR_USER2_INVAL;
+                    return def::ERR_USER2_INVAL;
 
                 if ($id1 == $id2)
-                    return ERR_SAMEUSER;
+                    return def::ERR_SAMEUSER;
 
                 $user1 = $this->userFactory->loadUserById($id1);
                 $user2 = $this->userFactory->loadUserById($id2);
 		    
                 if (!$manager) {
                     if ($id1 != $this->user->id && $id2 != $this->user->id)
-                        return ERR_NOT_ALLOWED;
+                        return def::ERR_NOT_ALLOWED;
                 }
 
                 if ($user1->block)
-                    return ERR_USER1_DISABLED;
+                    return def::ERR_USER1_DISABLED;
                 if ($user2->block)
-                    return ERR_USER2_DISABLED;
+                    return def::ERR_USER2_DISABLED;
 
                 $v = $this->fillCalCell($user1->name, $user2->name, $resType);
 
             } else {
                 $id1 = $this->user->id;
                 $id2 = NULL;
-                $v = RES_TYPE[$resType];
+                $v = def::RES_TYPE[$resType];
             }
             $ret = $this->resUpdate($id1, $id2, $d, $resType);
             if ($ret)
@@ -460,11 +459,11 @@ class TennisHelper
         } else {
             /* rejected if already reserved by another user */
 
-            if ($resType < RES_TYPE_COURS) {
+            if ($resType < def::RES_TYPE_COURS) {
 
                 /* normal reservation can't override cours/manif reservation */
-                if ($result[2] >= RES_TYPE_COURS)
-                    return ERR_BUSY;
+                if ($result[2] >= def::RES_TYPE_COURS)
+                    return def::ERR_BUSY;
 
                 //$user1 = $this->userFactory->loadUserById($result[0]);
                 //$user2 = $this->userFactory->loadUserById($result[1]);
@@ -472,7 +471,7 @@ class TennisHelper
             } else {
                 /* only admin can set cours and manif */
                 if (!$manager)
-                    return ERR_BUSY;
+                    return def::ERR_BUSY;
             }
 
             /* send an email if normal reservation replaced by cours ? */
@@ -482,11 +481,11 @@ class TennisHelper
                 return $ret;
             $v = '';
 
-            if ($resType >= RES_TYPE_COURS && $result[2] != $resType) {
+            if ($resType >= def::RES_TYPE_COURS && $result[2] != $resType) {
                 $ret = $this->resInsert($this->user->id, NULL, $d, $resType);
                 if ($ret)
                     return $ret;
-                $v = RES_TYPE[$resType];
+                $v = def::RES_TYPE[$resType];
             }
         }
         return $v;
@@ -524,9 +523,9 @@ class TennisHelper
     public function getAjax()
     {
         if ($this->user->guest)
-            return ERR_GUEST;
+            return def::ERR_GUEST;
         if ($this->user->block)
-            return ERR_INVAL;
+            return def::ERR_INVAL;
 
         if ($this->session->get('userId') != $this->user->id) {
             # if user change then reload details */
@@ -537,11 +536,11 @@ class TennisHelper
         $input  = Factory::getApplication()->getInput();
         $cmd = $input->get('cmd');
         if (is_null($cmd))
-            return ERR_INVAL;
+            return def::ERR_INVAL;
 
         switch ($cmd) {
         case NULL:
-            return ERR_INVAL;
+            return def::ERR_INVAL;
 
         case 'reserve':
 
@@ -557,6 +556,7 @@ class TennisHelper
                                   $input->get('resType'), $d);
 
         case 'reserveCancel':
+            # erase all opened reservations of the user
             return $this->resDelete($this->user->id, NULL);
 
         case 'prevCal':
@@ -574,13 +574,13 @@ class TennisHelper
             return $a;
 
         case 'getStrings':
-            return array(ERR_NAMES, RES_TYPE, RES_TYPE_CLASS);
+            return array(def::ERR_NAMES, def::RES_TYPE, def::RES_TYPE_CLASS);
 
         case 'selPlayer':
             return $this->showSelPlayer($input->get('date'), $input->get('hour'));
 
         default:
-            return ERR_INTERNAL;
+            return def::ERR_INTERNAL;
         }
     }
 }

@@ -10,8 +10,6 @@ const ERR_INTERNAL = 3;
 
 const AJAX_FMT = "JSON";
 
-const debug = true;
-
 var width;
 
 function getStrings()
@@ -33,7 +31,6 @@ function getStrings()
 	    ERR_NAMES = resp.data[0];
 	    RES_TYPE = resp.data[1];
 	    RES_TYPE_CLASS = resp.data[2];
-	    console.log('ERR_NAMES', ERR_NAMES);
 	},
 
 	error: function (jqXHR, textStatus, errorThrown) {
@@ -69,28 +66,17 @@ function getCookie(cname) {
 
 function message(msg)
 {
-    var popup = jQuery("#message");
-    var w = msg.length;
-    var h = (w / 20) >> 0;
-    if (h)
-	w = 20;
-
-    popup.css({
-	width: w * 8,
-	height: 100 + h * 11,
-	left: jQuery(window).width()/2 - w * 8 /2,
-	top: jQuery(window).height()/2 - (100 + h * 11)/2
+    const popupOverlay = document.getElementById('customPopupOverlay');
+    const closeBtn = document.getElementById('closePopupBtn');
+    const popupMsg = document.getElementById('popup-content');
+    
+    popupMsg.innerHTML = msg;
+    
+    closeBtn.addEventListener('click', () => {
+        popupOverlay.style.display = 'none';
     });
-
-    popup.html('<p align="center">' + msg + '</p>' +
-	       '<p align="center"><input type="button" value="Ok"></input>');
-    popup.modal("show");
-
-    jQuery('input').click(function() {
-	popup.modal('hide');
-    });
+    popupOverlay.style.display = 'flex';
 }
-
 
 function showCal()
 {
@@ -182,9 +168,7 @@ function reserveCancel()
 	'cmd'    : 'reserveCancel',
     };
 
-    debug && console.log("reserveCancel");
-
-     jQuery.ajax({
+    jQuery.ajax({
 	type   : 'POST',
 	data   : req,
 
@@ -281,7 +265,7 @@ function reserveDay(date, hour)
 	selectPlayer(date, hour, cell);
 
     } else {
-	debug && console.log("cancel reservation");
+	console.log("cancel reservation");
 
 	reserveReq(RES_TYPE_NONE, null, null, date, hour, null, cell);
     }
@@ -398,8 +382,6 @@ function filldataList()
 	}
     })
 }
-
-
 
 function detectMob() {
     return (navigator.userAgent.match(/Android/i)

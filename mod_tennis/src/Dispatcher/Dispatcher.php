@@ -37,14 +37,12 @@ class Dispatcher implements DispatcherInterface, HelperFactoryAwareInterface
 	);
 
 	$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
-
-	$wa->useScript('bootstrap.modal');
-
-	$wa->getRegistry()->addExtensionRegistryFile('mod_tennis');
+    
+    $wa->getRegistry()->addExtensionRegistryFile('mod_tennis');
 	$wa->useStyle('mod_tennis.styles');
 	$wa->useScript('mod_tennis.mod_tennis');
-
-        $params = new Registry($this->module->params);
+    
+    $params = new Registry($this->module->params);
 
 	$user = Factory::getApplication()->getIdentity();
 	$loggedIn = !$user->guest;
