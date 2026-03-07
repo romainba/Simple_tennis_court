@@ -10,8 +10,6 @@ const ERR_INTERNAL = 3;
 
 const AJAX_FMT = "JSON";
 
-const debug = true;
-
 var width;
 
 function getStrings()
@@ -35,9 +33,10 @@ function getStrings()
 	    RES_TYPE_CLASS = resp.data[2];
 	},
 
-	error: function(response) {
-	    debug && console.log("getStrings failed");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
 	}
     })
 }
@@ -67,42 +66,41 @@ function getCookie(cname) {
 
 function message(msg)
 {
-    var popup = jQuery("#message");
-    var w = msg.length;
-    var h = (w / 20) >> 0;
-    if (h)
-	w = 20;
-
-    popup.css({
-	width: w * 8,
-	height: 100 + h * 11,
-	left: jQuery(window).width()/2 - w * 8 /2,
-	top: jQuery(window).height()/2 - (100 + h * 11)/2
+    const popupOverlay = document.getElementById('customPopupOverlay');
+    const closeBtn = document.getElementById('closePopupBtn');
+    const popupMsg = document.getElementById('popup-content');
+    
+    popupMsg.innerHTML = msg;
+    
+    closeBtn.addEventListener('click', () => {
+        popupOverlay.style.display = 'none';
     });
-
-    popup.html('<p align="center">' + msg + '</p>' +
-	       '<p align="center"><input type="button" value="Ok"></input>');
-    popup.modal("show");
-
-    jQuery('input').click(function() {
-	popup.modal('hide');
-    });
+    popupOverlay.style.display = 'flex';
 }
 
-
-function showCal(cal)
+function showCal()
 {
     var e = document.getElementById("cal-header");
-    e.style.display = cal ? '' : 'none';
+    e.style.display = '';
     e = document.getElementById("calendar");
-    e.style.display = cal ? '' : 'none';
+    e.style.display = '';
     e = document.getElementById("sel-player");
-    e.style.display = cal ? 'none' : '';
+    e.style.display = 'none';
 
-    cal && showCalendar('currCal', parseInt(width, 10));
+    showCalendar('currCal', parseInt(width, 10));
+}
 
+function showSelPlayer()
+{
+    var e = document.getElementById("cal-header");
+    e.style.display = 'none';
+    e = document.getElementById("calendar");
+    e.style.display = 'none';
+    e = document.getElementById("sel-player");
+    e.style.display = '';
     return e;
 }
+
 
 /* For the current user, if date & hour is free then add reservation
  * else remove it.
@@ -139,7 +137,7 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 		    RES_TYPE_CLASS[RES_TYPE_NONE] : RES_TYPE_CLASS[resType];
 
 		if (msgElem)
-		    showCal(true);
+		    showCal();
 	    } else {
 		/* error */
 		if (msgElem == null)
@@ -151,9 +149,10 @@ function reserveReq(resType, player1, player2, date, hour, msgElem, cell)
 	    }
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax failed:");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
 	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -169,9 +168,7 @@ function reserveCancel()
 	'cmd'    : 'reserveCancel',
     };
 
-    debug && console.log("reserveCancel");
-
-     jQuery.ajax({
+    jQuery.ajax({
 	type   : 'POST',
 	data   : req,
 
@@ -181,18 +178,19 @@ function reserveCancel()
 	    if (data)
 		message(ERR_NAMES[data]);
 
-	    showCal(true);
+	    showCal();
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax failed:");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
 	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
 }
 
-function showSelPlayer(date, hour, cell)
+function selectPlayer(date, hour, cell)
 {
     filldataList();
 
@@ -208,7 +206,6 @@ function showSelPlayer(date, hour, cell)
     jQuery.ajax({
 	type   : 'POST',
 	data   : req,
-	dataType: 'json',
 
 	success: function(data) {
 	    var resp = JSON.parse(data);
@@ -216,10 +213,10 @@ function showSelPlayer(date, hour, cell)
 	    if (!isNaN(parseInt(data)))
 		message(ERR_NAMES[data]);
 	    else {
-		var e = showCal(false);
+		var e = showSelPlayer();
 		e.innerHTML = data;
 
-		jQuery(".player").clearSearch();
+		//jQuery(".player").clearSearch();
 
 		jQuery("#reserveBtn").click(function(event) {
 		    reserveReq(RES_TYPE_NORMAL,
@@ -235,9 +232,10 @@ function showSelPlayer(date, hour, cell)
 	    }
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax failed:");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
 	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -248,11 +246,10 @@ function reserveDay(date, hour)
 {
     var str = 'cell_' + date + '_' + hour,
 	cell = document.getElementById(str),
-	logged = (getCookie("joomla_user_state") == "logged_in"),
 	elem = document.getElementById("resTypeList"),
 	resType = elem ? elem.value : 0;
 
-    if (logged == false) {
+    if (!window.JoomlaUser?.loggedIn) {
 	message(ERR_NAMES[ERR_GUEST]);
     	return;
     }
@@ -265,10 +262,10 @@ function reserveDay(date, hour)
 
     if (cell.innerHTML == '') {
 
-	showSelPlayer(date, hour, cell);
+	selectPlayer(date, hour, cell);
 
     } else {
-	debug && console.log("cancel reservation");
+	console.log("cancel reservation");
 
 	reserveReq(RES_TYPE_NONE, null, null, date, hour, null, cell);
     }
@@ -300,9 +297,10 @@ function showCalendar(cmd, width)
 	    e.style.display = '';
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax showCalendar failed");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -339,9 +337,10 @@ function showCalHeader()
 	    })
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax showCalHeader failed");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
@@ -375,15 +374,14 @@ function filldataList()
 	    });
 	},
 
-	error: function(response) {
-	    debug && console.log("ajax getUsersName failed");
-	    debug && console.log(response);
+	error: function (jqXHR, textStatus, errorThrown) {
+            console.log('HTTP Status Code:', jqXHR.status);
+            console.log('Status Text:', textStatus);
+            console.log('Error Thrown:', errorThrown);
     	    alert(ERR_NAMES[ERR_INTERNAL]);
 	}
     })
 }
-
-
 
 function detectMob() {
     return (navigator.userAgent.match(/Android/i)
@@ -400,7 +398,7 @@ jQuery(document).ready(function() {
     getStrings();
     width = jQuery("#calendar").css("width");
     showCalHeader();
-    showCal(true);
+    showCal();
 
     jQuery(window).on('resize', function() {
 	var e = document.getElementById("calendar");
