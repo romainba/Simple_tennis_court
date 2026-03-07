@@ -4,21 +4,32 @@ namespace Joomla\Module\CourtUsage\Site\Helper;
 defined('_JEXEC') or die;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Application\CMSApplication;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Date\Date;
 use DateInterval;
 use DatePeriod;
 use Joomla\CMS\Log\Log;
+use Joomla\CMS\Helper\ModuleHelper;
+use Joomla\Registry\Registry;
 
 const ERR_INVAL = 1;
 const ERR_INTERNAL = 2;
 const ERR_BD = 3;
 
-require_once JPATH_SITE . '/modules/mod_tennis/const.php';
+use Joomla\Module\Tennis\Site\Helper\def;
 
 class CourtUsageHelper
 {
+    private $params;
+
+    function __construct()
+    {
+	$module = ModuleHelper::getModule('mod_court_usage');
+	$this->params = new Registry($module->params);
+    }
+
     public function chart($type, $begin, $end)
     {
         $db = Factory::getContainer()->get(DatabaseInterface::class);
@@ -43,18 +54,18 @@ class CourtUsageHelper
 
             $interval = DateInterval::createFromDateString('1 month');
             $period = new DatePeriod($b, $interval, $e);
-
+            
             $usage['date'] = array('normal', 'cours', 'manif');
             foreach($period as $dt) {
-	        // Log::add($dt->format("M Y"), Log::DEBUG, 'mod_court_usage');
+                // Log::add($dt->format("M Y"), Log::DEBUG, 'mod_court_usage');
                 $usage[$dt->format("M Y")] = array(0, 0, 0);
-	    }
+            }
             foreach($res as $r) {
                 $d = new Date($r['date']);
                 $k = $d->format("M Y");
 
                 for ($i = 1; $i < 4; $i++)
-                    if (RES_TYPE[$i] == $r['name']) {
+                    if (def::RES_TYPE[$i] == $r['name']) {
                         $usage[$k][$i - 1]++;
                         break;
                     }
@@ -139,9 +150,9 @@ class CourtUsageHelper
     public function usersYearStatus($begin, $end, $showNewUsers)
     {
         $s = '<p style="margin-left:50px" >';
-        $s .= "Reservations normal " . $this->getCount(RES_TYPE_NORMAL, $begin, $end) .
-            ", cours " . $this->getCount(RES_TYPE_COURS, $begin, $end) .
-           ", manif " . $this->getCount(RES_TYPE_MANIF, $begin, $end) . '</br>';
+        $s .= "Reservations normal " . $this->getCount(def::RES_TYPE_NORMAL, $begin, $end) .
+            ", cours " . $this->getCount(def::RES_TYPE_COURS, $begin, $end) .
+            ", manif " . $this->getCount(def::RES_TYPE_MANIF, $begin, $end) . '</br>';
 
         if ($showNewUsers == 1) {
            $db = Factory::getContainer()->get(DatabaseInterface::class);

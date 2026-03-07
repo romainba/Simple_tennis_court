@@ -10,10 +10,11 @@ use Joomla\DI\ServiceProviderInterface;
 return new class implements ServiceProviderInterface {
     public function register(Container $container): void
     {
-        $container->registerServiceProvider(
+	$container->registerServiceProvider(
 		new ModuleDispatcherFactoryServiceProvider('\\Joomla\\Module\\CourtUsage'));
 	$container->registerServiceProvider(
 		new HelperFactoryServiceProvider('\\Joomla\\Module\\CourtUsage\\Site\\Helper'));
-        $container->registerServiceProvider(new ModuleServiceProvider());  
+        $container->registerServiceProvider(new ModuleServiceProvider());
+
     }
 };

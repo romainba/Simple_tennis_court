@@ -17,6 +17,14 @@
   </media>
   <config>
     <fields name="params">
+      <fieldset name="basic">
+        <field
+            name="limit"
+            type="number"
+            label="Booking Limit"
+            default="5"
+	    />
+      </fieldset>
     </fields>
   </config>
 </extension>

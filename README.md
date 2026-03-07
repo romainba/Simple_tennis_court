@@ -1,4 +1,10 @@
-Simple module to manage reservation of court using Joomla 3.x
+Simple module to manage reservation of court using Joomla
+
+dump database:
+  mysqldump --no-tablespaces -u <user>  -h <server> -p <database name> > backup.sql
+
+restore database:
+  mysql -u <user> -p <database name> < backup.sql
 
 helper
 - getAjax
