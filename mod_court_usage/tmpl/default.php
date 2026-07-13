@@ -8,6 +8,10 @@ $wa->useScript('mod_court_usage.mod_court_usage');
 ?>
 
 <div id="usersStatus"></div>
+<font size="4">Annee 2026</font>
+<div id="stats2026"></div>
+<div id="chart2026a"></div>
+<div id="chart2026b"></div><hr>
 <font size="4">Annee 2025</font>
 <div id="stats2025"></div>
 <div id="chart2025a"></div>
