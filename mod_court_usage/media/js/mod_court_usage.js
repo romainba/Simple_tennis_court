@@ -11,7 +11,7 @@ google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
     usersYearStatus('stats2026','2026-01-01','2026-12-31', 1);
-    draw_chart('chart2025a',
+    draw_chart('chart2026a',
                'court-usage',
                "Utilisation du court pour l'annee 2026",
                '2026-01-01',
