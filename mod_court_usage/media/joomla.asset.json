@@ -6,6 +6,11 @@
     "license": "GPL-2.0-or-later",
     "assets": [
 	{
+	    "name": "mod_court_usage.stylesheet",
+	    "type": "style",
+	    "uri": "mod_court_usage/css/stylesheet.css"
+	},
+	{
 	    "name": "google.charts",
 	    "type": "script",
 	    "uri": "https://www.gstatic.com/charts/loader.js",
@@ -19,6 +24,18 @@
 	    "uri": "mod_court_usage/mod_court_usage.js",
 	    "dependencies": [
 		"google.charts",
+		"jquery",
+		"core"
+	    ],
+	    "attributes": {
+		"defer": true
+	    }
+	},
+	{
+	    "name": "mod_court_usage.mod_users_table",
+	    "type": "script",
+	    "uri": "mod_court_usage/mod_users_table.js",
+	    "dependencies": [
 		"jquery",
 		"core"
 	    ],

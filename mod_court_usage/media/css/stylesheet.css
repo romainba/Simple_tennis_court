@@ -4,3 +4,60 @@ body {
 header {
     text-align: center;
 }
+
+.usersTableSort {
+    align-items: center;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    color: inherit;
+    display: flex;
+    font: inherit;
+    justify-content: space-between;
+    padding: 0 !important;
+    text-align: left;
+    width: 100%;
+}
+
+.usersTableSort:hover,
+.usersTableSort:active {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.usersTableSortArrows {
+    color: #ddd;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+    line-height: 8px;
+    margin-left: 8px;
+}
+
+.usersTableSortUp,
+.usersTableSortDown {
+    color: #ddd !important;
+    display: block;
+}
+
+.usersTableSort[data-direction=""] .usersTableSortUp,
+.usersTableSort[data-direction=""] .usersTableSortDown {
+    color: #ddd !important;
+    font-weight: normal;
+}
+
+.usersTableSort[data-direction="ascending"] .usersTableSortUp,
+.usersTableSort[data-direction="descending"] .usersTableSortDown {
+    color: #000 !important;
+    font-weight: bold;
+}
+
+.usersTableSort:focus-visible {
+    outline: 2px solid #1769aa;
+    outline-offset: 2px;
+}

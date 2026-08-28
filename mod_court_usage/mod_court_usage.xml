@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
   <name>Joomla module Tennis court usage</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <author>Romain Baeriswyl</author>
   <description>Module to show tennis court usage</description>
   <namespace path="src">Joomla\Module\CourtUsage</namespace>
@@ -24,6 +24,12 @@
             label="Booking Limit"
             default="5"
 	    />
+        <field
+            name="layout"
+            type="modulelayout"
+            label="JFIELD_ALT_LAYOUT_LABEL"
+            description="JFIELD_ALT_MODULE_LAYOUT_DESC"
+            />
       </fieldset>
     </fields>
   </config>

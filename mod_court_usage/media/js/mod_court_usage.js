@@ -10,6 +10,7 @@ google.charts.load('current', {'packages':['corechart']});
 google.charts.setOnLoadCallback(draw_charts);
 
 function draw_charts() {
+
     usersYearStatus('stats2026','2026-01-01','2026-12-31', 1);
     draw_chart('chart2026a',
                'court-usage',
@@ -180,7 +181,7 @@ function draw_chart(elem, type, title, begin, end, isStacked, hTitle) {
         data: req,
 
         success: function(data) {
-	    resp = JSON.parse(data);
+            resp = JSON.parse(data);
             var options = {
                 'title': title,
                 'width': width,
@@ -212,7 +213,7 @@ function usersStatus(elem) {
         data: req,
 
         success: function(data) {
-	    resp = JSON.parse(data);
+            resp = JSON.parse(data);
             var cell = document.getElementById(elem);
             cell.innerHTML = resp.data;
         },
@@ -238,7 +239,7 @@ function usersYearStatus(elem, begin, end, showNewUsers) {
         data: req,
 
         success: function(data) {
-	    resp = JSON.parse(data);
+            resp = JSON.parse(data);
             var cell = document.getElementById(elem);
             cell.innerHTML = resp.data;
         },

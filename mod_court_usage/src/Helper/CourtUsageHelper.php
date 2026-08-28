@@ -26,8 +26,8 @@ class CourtUsageHelper
 
     function __construct()
     {
-	$module = ModuleHelper::getModule('mod_court_usage');
-	$this->params = new Registry($module->params);
+    $module = ModuleHelper::getModule('mod_court_usage');
+    $this->params = new Registry($module->params);
     }
 
     public function chart($type, $begin, $end)
@@ -48,13 +48,13 @@ class CourtUsageHelper
 
         $b = new Date($begin);
         $e = new Date($end);
-	
+
         switch ($type) {
         case 'court-usage':
 
             $interval = DateInterval::createFromDateString('1 month');
             $period = new DatePeriod($b, $interval, $e);
-            
+
             $usage['date'] = array('normal', 'cours', 'manif');
             foreach($period as $dt) {
                 // Log::add($dt->format("M Y"), Log::DEBUG, 'mod_court_usage');
@@ -88,11 +88,15 @@ class CourtUsageHelper
             $users = $db->loadAssocList('id', 'count');
 
             foreach($res as $r) {
-                $p = intval($r['user1']);
-                $users[$p]++;
+                if ($r['user1'] !== null && $r['user1'] !== '') {
+                    $p = intval($r['user1']);
+                    $users[$p]++;
+                }
 
-                $p = intval($r['user2']);
-                $users[$p]++;
+                if ($r['user2'] !== null && $r['user2'] !== '') {
+                    $p = intval($r['user2']);
+                    $users[$p]++;
+                }
             }
 
             $w = range(5, 30, 5);
@@ -172,7 +176,77 @@ class CourtUsageHelper
            foreach ($res as $r)
                 $s .= $r['username'] . ', ';
         }
-	$s .= '</p>';
+    $s .= '</p>';
+        return $s;
+    }
+
+    public function usersTable($year)
+    {
+        $begin = $year . '-01-01';
+        $end = $year . '-12-31';
+
+        $db = Factory::getContainer()->get(DatabaseInterface::class);
+
+        $sub = $db->getQuery(true);
+        $sub->select('COUNT(*)')
+            ->from($db->quoteName('#__reservation'))
+            ->where('(' . $db->quoteName('user1') . ' = ' . $db->quoteName('a.id') .
+                    ' OR ' . $db->quoteName('user2') . ' = ' . $db->quoteName('a.id') . ')')
+            ->where($db->quoteName('date') . ' >= ' . $db->quote($begin))
+            ->where($db->quoteName('date') . ' <= ' . $db->quote($end))
+	    ->where($db->quoteName('type') . '=' . def::RES_TYPE_NORMAL);
+
+        $query = $db->getQuery(true);
+        $query->select(array(
+                $db->quoteName('a.id'),
+                $db->quoteName('a.name'),
+                $db->quoteName('a.username'),
+                $db->quoteName('a.email'),
+                $db->quoteName('a.block'),
+                $db->quoteName('a.requireReset'),
+                $db->quoteName('a.lastvisitDate'),
+              ))
+              ->select('(' . (string) $sub . ') AS ' . $db->quoteName('nb_reservations'))
+              ->from($db->quoteName('#__users', 'a'))
+              ->order($db->quoteName('a.id') . ' ASC');
+
+        $db->setQuery($query);
+        $users = $db->loadAssocList();
+
+        $cell = 'style="border:1px solid #ccc;padding:2px 6px;"';
+
+        $headers = array(
+            'id', 'name', 'username', 'email', 'blocked', 'reset required',
+            'last visit', '# reservations ' . $year,
+        );
+
+        $s = '<table class="usersTable" style="border-collapse:collapse;margin-left:50px" >' .
+             '<thead><tr>';
+        foreach ($headers as $index => $header) {
+            $s .= '<th ' . $cell . '><span class="usersTableSort" role="button" tabindex="0" ' .
+                'data-column="' . $index . '" data-direction="">' .
+                htmlspecialchars($header, ENT_QUOTES, 'UTF-8') .
+                '<span class="usersTableSortArrows" aria-hidden="true">' .
+                '<span class="usersTableSortUp">&#9650;</span>' .
+                '<span class="usersTableSortDown">&#9660;</span>' .
+                '</span></span></th>';
+        }
+        $s .= '</tr></thead><tbody>';
+
+        foreach ($users as $u) {
+            $s .= '<tr>' .
+                  '<td ' . $cell . '>' . $u['id'] . '</td>' .
+                  '<td ' . $cell . '>' . htmlspecialchars($u['name']) . '</td>' .
+                  '<td ' . $cell . '>' . htmlspecialchars($u['username']) . '</td>' .
+                  '<td ' . $cell . '>' . htmlspecialchars($u['email']) . '</td>' .
+                  '<td ' . $cell . '>' . $u['block'] . '</td>' .
+                  '<td ' . $cell . '>' . $u['requireReset'] . '</td>' .
+                  '<td ' . $cell . '>' . $u['lastvisitDate'] . '</td>' .
+                  '<td ' . $cell . '>' . $u['nb_reservations'] . '</td>' .
+                  '</tr>';
+        }
+        $s .= '</tbody></table>';
+
         return $s;
     }
 
@@ -233,8 +307,8 @@ class CourtUsageHelper
         $input  = Factory::getApplication()->getInput();
         $cmd = $input->get('cmd');
 
-	$post = $input->post->getArray();
-	// Log::add('getAjax ' . print_r($post, true), Log::DEBUG, 'mod_court_usage');
+        $post = $input->post->getArray();
+        // Log::add('getAjax ' . print_r($post, true), Log::DEBUG, 'mod_court_usage');
 
         if (is_null($cmd))
             return ERR_INVAL;
@@ -250,6 +324,9 @@ class CourtUsageHelper
         case 'usersYearStatus':
             return $this->usersYearStatus($input->get('begin'), $input->get('end'),
                        $input->get('showNewUsers'));
+
+        case 'usersTable':
+            return $this->usersTable($input->get('year'));
 
         default:
             return ERR_INVAL;
