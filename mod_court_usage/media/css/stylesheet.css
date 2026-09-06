@@ -5,6 +5,11 @@ header {
     text-align: center;
 }
 
+#usersTable {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
 .usersTableSort {
     align-items: center;
     -webkit-appearance: none;
