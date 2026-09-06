@@ -220,7 +220,8 @@ class CourtUsageHelper
             'last visit', '# reservations ' . $year,
         );
 
-        $s = '<table class="usersTable" style="border-collapse:collapse;margin-left:50px" >' .
+        $s = '<div class="usersTableScroll" style="display:block;min-width:0;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;">' .
+               '<table class="usersTable" style="border-collapse:collapse;margin-left:50px;min-width:100%;width:max-content;white-space:nowrap;" >' .
              '<thead><tr>';
         foreach ($headers as $index => $header) {
             $s .= '<th ' . $cell . '><span class="usersTableSort" role="button" tabindex="0" ' .
@@ -245,7 +246,7 @@ class CourtUsageHelper
                   '<td ' . $cell . '>' . $u['nb_reservations'] . '</td>' .
                   '</tr>';
         }
-        $s .= '</tbody></table>';
+        $s .= '</tbody></table></div>';
 
         return $s;
     }

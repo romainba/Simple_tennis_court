@@ -1,8 +1,31 @@
-body {
-}
-
 header {
     text-align: center;
+}
+
+#usersTable {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    width: 100%;
+}
+
+.usersTableScroll {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.usersTableScroll .usersTable {
+    min-width: 100%;
+    width: max-content !important;
+}
+
+.usersTableScroll .usersTable th,
+.usersTableScroll .usersTable td {
+    white-space: nowrap;
 }
 
 .usersTableSort {
